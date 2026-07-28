@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Eureco — A creative digital agency delivering comprehensive marketing solutions, branding, UI/UX design, and web development to help your business grow faster and smarter.">
+  <title>Eureco — Creative Digital Agency</title>
+  <link rel="icon" type="image/png" href="assets/images/logo-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ========== NAVIGATION ========== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="nav-logo" id="navLogo">
+        <img src="assets/images/logo-light.png" alt="Eureco Logo" class="logo-light">
+        <img src="assets/images/logo-dark.png" alt="Eureco Logo" class="logo-dark">
+      </a>
+      <div class="nav-right">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <!-- Moon Icon (shown in light mode) -->
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <div class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-links">
+      <a href="#hero" class="menu-link">Home</a>
+      <a href="#services" class="menu-link">Services</a>
+      <a href="#projects" class="menu-link">Projects</a>
+      <a href="#awards" class="menu-link">Awards</a>
+      <a href="#contact" class="menu-link">Contact</a>
+    </div>
+  </div>
+
+  <!-- ========== HERO SECTION ========== -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero-content">
+        <!-- Left: Main Typography -->
+        <div class="hero-text">
+          <h1>
+            <span class="hero-line">
+              <span class="hero-line-inner hero-line--creative">CREATIVE</span>
+            </span>
+            <span class="hero-line">
+              <span class="hero-line-inner hero-line--digital">Digital</span>
+            </span>
+            <span class="hero-line">
+              <span class="hero-line-inner hero-line--agency">AGENCY</span>
+            </span>
+          </h1>
+
+          <!-- 3D Decorative Image -->
+          <div class="hero-3d-image">
+            <img src="assets/images/hero-3d.png" alt="Abstract 3D scene">
+          </div>
+
+          <!-- CTA Arrow -->
+          <a href="#services" class="hero-cta-arrow" aria-label="Scroll to services">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="7" y1="17" x2="17" y2="7"/>
+              <polyline points="7 7 17 7 17 17"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Right: Service List & Tagline -->
+        <div class="hero-sidebar">
+          <div class="hero-services">
+            <div class="hero-service-item">
+              <span class="hero-service-num">01</span>
+              <span class="hero-service-text">Social Media Marketing</span>
+            </div>
+            <div class="hero-service-item">
+              <span class="hero-service-num">02</span>
+              <span class="hero-service-text">Branding & Creative Design</span>
+            </div>
+            <div class="hero-service-item">
+              <span class="hero-service-num">03</span>
+              <span class="hero-service-text">Web Design and Development</span>
+            </div>
+          </div>
+
+          <div class="hero-tagline">
+            <strong>GROW YOUR</strong>
+            <p>Brand with data driven marketing</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-number" data-target="150" data-suffix="+">0</div>
+          <div class="stat-label">success projects</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="100" data-suffix="+">0</div>
+          <div class="stat-label">product launched</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="90" data-suffix="+">0</div>
+          <div class="stat-label">startup company</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-brand">Eureco</div>
+          <div class="stat-brand-desc">every project we handle is designed for long-term success</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SERVICES SECTION ========== -->
+  <section class="services" id="services">
+    <div class="container">
+      <!-- Header -->
+      <div class="services-header reveal">
+        <span class="section-label">Service</span>
+        <p class="services-tagline">
+          Comprehensive <strong>marketing solutions</strong> designed to help your business grow <strong>faster and smarter</strong>
+        </p>
+      </div>
+
+      <!-- 3D Visual -->
+      <div class="services-visual reveal-scale delay-2">
+        <div class="services-3d-image">
+          <img src="assets/images/hero-3d.png" alt="3D decorative scene">
+        </div>
+        <a href="#contact" class="services-arrow-btn" aria-label="Get started">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="7" y1="17" x2="17" y2="7"/>
+            <polyline points="7 7 17 7 17 17"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Service Rows -->
+      <div class="service-row reveal-left delay-1">
+        <div class="service-row-num">01</div>
+        <div class="service-row-title">Social Media Marketing</div>
+        <div class="service-row-tags">
+          <span class="service-tag">Facebook</span>
+          <span class="service-tag">Youtube</span>
+          <span class="service-tag">Instagram</span>
+        </div>
+      </div>
+
+      <div class="service-row reveal-left delay-2">
+        <div class="service-row-num">02</div>
+        <div class="service-row-title">UI/UX Design</div>
+        <div class="service-row-tags">
+          <span class="service-tag">Figma</span>
+          <span class="service-tag">Adobe XD</span>
+          <span class="service-tag">Sketch</span>
+        </div>
+      </div>
+
+      <div class="service-row reveal-left delay-3">
+        <div class="service-row-num">03</div>
+        <div class="service-row-title">Web Development</div>
+        <div class="service-row-tags">
+          <span class="service-tag">React</span>
+          <span class="service-tag">Node.js</span>
+          <span class="service-tag">WordPress</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PROJECTS SECTION ========== -->
+  <section class="projects" id="projects">
+    <!-- Background large text -->
+    <div class="projects-bg-text" id="projectsBgLeft">RECENT</div>
+    <div class="projects-bg-text-right" id="projectsBgRight">PROJECTS</div>
+
+    <div class="container">
+      <!-- Header -->
+      <div class="projects-header reveal">
+        <span class="projects-label">Real Results<br>for Our Clients</span>
+        <p class="projects-tagline">
+          Selected projects that highlighted our creative approach and proven impact
+        </p>
+      </div>
+
+      <!-- Content -->
+      <div class="projects-content">
+        <!-- Left: Callout -->
+        <div class="projects-callout reveal delay-2">
+          <h3 class="projects-callout-title"><span>*</span>Latest project of 2025</h3>
+          <p>Explore our work with brands that trusted us to bring their vision to life through impactful marketing and design</p>
+        </div>
+
+        <!-- Right: Project Cards -->
+        <div class="project-cards">
+          <div class="project-card reveal-right delay-1">
+            <div class="project-card-image">
+              <img src="assets/images/project-1.png" alt="Brand Identity Project">
+            </div>
+            <div class="project-card-info">
+              <h4 class="project-card-title">NovaBrand</h4>
+              <p class="project-card-desc">Logo and Branding</p>
+            </div>
+          </div>
+
+          <div class="project-card reveal-right delay-2">
+            <div class="project-card-image">
+              <img src="assets/images/project-2.png" alt="Photography Project">
+            </div>
+            <div class="project-card-info">
+              <h4 class="project-card-title">Artisan Studio</h4>
+              <p class="project-card-desc">Logo and Branding</p>
+            </div>
+          </div>
+
+          <div class="project-card reveal-right delay-3">
+            <div class="project-card-image">
+              <img src="assets/images/project-3.png" alt="Stationery Design">
+            </div>
+            <div class="project-card-info">
+              <h4 class="project-card-title">Luxe Prints</h4>
+              <p class="project-card-desc">Logo and Branding</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== AWARDS SECTION ========== -->
+  <section class="awards" id="awards">
+    <div class="container">
+      <!-- Header -->
+      <div class="awards-header reveal">
+        <span class="section-label">Awards</span>
+        <p class="awards-tagline">Our achievements and recognition</p>
+      </div>
+
+      <!-- Awards Table -->
+      <div class="awards-table">
+        <div class="awards-table-header reveal delay-1">
+          <span>sl</span>
+          <span>award</span>
+          <span>project</span>
+          <span style="text-align:right;">year</span>
+        </div>
+
+        <div class="award-row reveal-right delay-1">
+          <div class="award-row-num">01</div>
+          <div class="award-row-name">Webby Awards</div>
+          <div class="award-row-project">Eureco</div>
+          <div class="award-row-year">2025</div>
+        </div>
+
+        <div class="award-row highlighted reveal-right delay-2">
+          <div class="award-row-num">02</div>
+          <div class="award-row-name">Webby Awards</div>
+          <div class="award-row-project">Eureco</div>
+          <div class="award-row-year">2025</div>
+        </div>
+
+        <div class="award-row reveal-right delay-3">
+          <div class="award-row-num">03</div>
+          <div class="award-row-name">Webby Awards</div>
+          <div class="award-row-project">Eureco</div>
+          <div class="award-row-year">2025</div>
+        </div>
+
+        <div class="award-row reveal-right delay-4">
+          <div class="award-row-num">04</div>
+          <div class="award-row-name">Webby Awards</div>
+          <div class="award-row-project">Eureco</div>
+          <div class="award-row-year">2025</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CONTACT SECTION ========== -->
+  <section class="contact" id="contact">
+    <div class="container">
+      <div class="contact-content">
+        <!-- Left: Form -->
+        <div class="contact-form-wrapper reveal-left">
+          <h2 class="contact-title">Contact Me</h2>
+          <form class="contact-form" id="contactForm" onsubmit="return false;">
+            <div class="form-field">
+              <label>Click enter to get start.</label>
+              <button class="enter-btn" type="button" id="startBtn">ENTER</button>
+            </div>
+
+            <div class="form-field" id="nameField" style="opacity: 0.4; pointer-events: none; transition: all 0.4s ease;">
+              <label>I'm...</label>
+              <input type="text" placeholder="Your name" id="nameInput">
+              <button class="enter-btn" type="button" id="nameBtn">ENTER</button>
+            </div>
+
+            <div class="form-field" id="emailField" style="opacity: 0.4; pointer-events: none; transition: all 0.4s ease;">
+              <label>My mail...</label>
+              <input type="email" placeholder="Your email" id="emailInput">
+              <button class="enter-btn" type="button" id="emailBtn">ENTER</button>
+            </div>
+
+            <div class="form-services" id="servicesField" style="opacity: 0.4; pointer-events: none; transition: all 0.4s ease;">
+              <div class="form-services-label">The service I want is:</div>
+              <div class="form-services-tags">
+                <button class="form-service-tag" type="button">SOCIAL MEDIA MARKETING</button>
+                <button class="form-service-tag" type="button">UI/UX DESIGN</button>
+                <button class="form-service-tag" type="button">WEB DEVELOPMENT</button>
+                <button class="form-service-tag" type="button">BRANDING</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="form-submit-row" id="submitRow" style="opacity: 0.4; pointer-events: none; transition: all 0.4s ease;">
+            <span class="form-submit-label">Send service request</span>
+            <button class="form-submit-btn" type="button" id="submitBtn">GET STARTED</button>
+          </div>
+        </div>
+
+        <!-- Right: Headline & 3D Image -->
+        <div class="contact-right reveal-right delay-2">
+          <h2 class="contact-headline">Let's Talk</h2>
+          <div class="contact-3d-image">
+            <img src="assets/images/contact-3d.png" alt="3D decorative arrows">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer" id="footer">
+    <div class="container">
+      <div class="footer-top reveal">
+        <a href="mailto:eureco@mail.com" class="footer-email">eureco@mail.com</a>
+        <div class="footer-links">
+          <a href="#hero" class="footer-link">Home</a>
+          <a href="https://envato.com" target="_blank" class="footer-link">Envato</a>
+          <a href="#services" class="footer-link">Services</a>
+          <a href="https://dribbble.com" target="_blank" class="footer-link">Dribble</a>
+          <a href="#contact" class="footer-link">Contact</a>
+          <a href="https://behance.net" target="_blank" class="footer-link">Behance</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom reveal delay-2">
+        <span class="footer-copyright">copyright 2025, all reserves.</span>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <span>|</span>
+          <a href="#">Terms & Conditions</a>
+        </div>
+      </div>
+
+      <div class="footer-brand reveal-scale delay-3">
+        <span class="footer-brand-text">EURECO</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
