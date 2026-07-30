@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // Hidden Containers (Hero, Services, Projects, Awards, Contact, Footer)
+      // Hidden Containers & Synchronized Navigation Links (Hero, Services, Projects, Awards, Contact, Footer)
       if (data.hiddenContainers) {
         const secs = {
           hero: document.getElementById('hero'),
@@ -420,9 +420,31 @@ document.addEventListener('DOMContentLoaded', () => {
           contact: document.getElementById('contact'),
           footer: document.querySelector('.footer')
         };
+
+        const navMap = {
+          hero: ['a[href="#hero"]', 'a[href="#top"]'],
+          services: ['a[href="#services"]'],
+          projects: ['a[href="#projects"]'],
+          awards: ['a[href="#awards"]'],
+          contact: ['a[href="#contact"]']
+        };
+
         Object.keys(data.hiddenContainers).forEach(key => {
+          const isHidden = data.hiddenContainers[key];
+
+          // Hide/Show main layout section
           if (secs[key]) {
-            secs[key].style.display = data.hiddenContainers[key] ? 'none' : '';
+            secs[key].style.display = isHidden ? 'none' : '';
+          }
+
+          // Hide/Show matching navigation links in mobile menu & footer
+          if (navMap[key]) {
+            navMap[key].forEach(selector => {
+              const links = document.querySelectorAll(selector);
+              links.forEach(link => {
+                link.style.display = isHidden ? 'none' : '';
+              });
+            });
           }
         });
       }
