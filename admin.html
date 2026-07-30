@@ -55,48 +55,46 @@
     }
 
     .login-header {
-      text-align: center;
-      margin-bottom: 32px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 32px;
     }
 
-    .login-brand {
+    .login-logo-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      width: 100%;
+      margin-bottom: 20px;
     }
 
-    .login-brand-icon {
-      height: 42px;
+    .login-logo {
+      height: 52px;
       width: auto;
       object-fit: contain;
     }
 
-    .login-brand-text {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.5px;
-      line-height: 1;
-    }
+    .login-logo.logo-light { display: none; }
+    .login-logo.logo-dark { display: block; }
+
+    [data-theme="dark"] .login-logo.logo-light { display: block; filter: brightness(10); }
+    [data-theme="dark"] .login-logo.logo-dark { display: none; }
 
     .login-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.3rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: var(--text-primary);
+      text-align: center;
     }
 
     .login-subtitle {
       font-size: 0.85rem;
       color: var(--text-muted);
       margin-top: 6px;
+      text-align: center;
     }
 
     .login-form-group {
@@ -579,9 +577,9 @@
   <div class="admin-login-screen" id="loginScreen">
     <div class="login-card">
       <div class="login-header">
-        <div class="login-brand">
-          <img src="assets/images/logo-icon.png" alt="Eureco Logo Icon" class="login-brand-icon">
-          <span class="login-brand-text">Eureco</span>
+        <div class="login-logo-wrapper">
+          <img src="assets/images/logo-dark.png" alt="Eureco Logo" class="login-logo logo-dark">
+          <img src="assets/images/logo-light.png" alt="Eureco Logo" class="login-logo logo-light">
         </div>
         <h2 class="login-title">Admin Portal</h2>
         <p class="login-subtitle">Sign in to manage Eureco website containers and data</p>
