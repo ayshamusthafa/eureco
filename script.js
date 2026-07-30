@@ -513,6 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             table.appendChild(row);
           });
+        }
+      }
+
       // Footer Content & Social Links Hydrator
       if (data.footer) {
         const fEmail = document.querySelector('.footer-email');
