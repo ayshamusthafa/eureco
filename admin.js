@@ -581,6 +581,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dash404Status').textContent = siteData.config404.enabled ? 'ON' : 'OFF';
   };
 
+  const toggle404El = document.getElementById('toggle404');
+  if (toggle404El) {
+    toggle404El.addEventListener('change', () => {
+      save404Settings();
+    });
+  }
+
   document.getElementById('passwordForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const newP = document.getElementById('newPassword').value.trim();

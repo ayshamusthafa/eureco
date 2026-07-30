@@ -335,6 +335,39 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data = JSON.parse(raw);
 
+      // 404 Custom Error Mode Toggle
+      let overlay404 = document.getElementById('overlay404');
+      if (data.config404 && data.config404.enabled) {
+        if (!overlay404) {
+          overlay404 = document.createElement('div');
+          overlay404.id = 'overlay404';
+          overlay404.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 9999999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+          `;
+          overlay404.innerHTML = `
+            <div style="font-family: 'Space Grotesk', sans-serif; font-size: clamp(6rem, 20vw, 12rem); font-weight: 700; color: var(--accent); line-height: 0.9; letter-spacing: -6px; margin-bottom: 20px;">404</div>
+            <h1 style="font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(1.8rem, 4vw, 3rem); color: var(--text-primary); margin-bottom: 16px;">Page Not Found</h1>
+            <p id="overlay404Text" style="font-size: 1rem; color: var(--text-muted); max-width: 460px; margin-bottom: 36px; line-height: 1.6;"></p>
+            <a href="admin.html" target="_blank" style="padding: 14px 28px; background: var(--accent); color: #FFF; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; text-decoration: none;">Open Admin Panel ⚙</a>
+          `;
+          document.body.appendChild(overlay404);
+        }
+        const textEl = document.getElementById('overlay404Text');
+        if (textEl) textEl.textContent = data.config404.customMessage || 'Page Not Found — Eureco Digital Agency';
+        overlay404.style.display = 'flex';
+      } else if (overlay404) {
+        overlay404.style.display = 'none';
+      }
+
       // Title & Favicon
       if (data.siteTitle) document.title = data.siteTitle;
       if (data.faviconUrl) {
@@ -491,6 +524,37 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             table.appendChild(row);
           });
+        }
+      // 404 / Maintenance Mode Fullscreen Overlay
+      let overlay404 = document.getElementById('maintenanceOverlay404');
+      if (data.config404 && data.config404.enabled) {
+        if (!overlay404) {
+          overlay404 = document.createElement('div');
+          overlay404.id = 'maintenanceOverlay404';
+          overlay404.className = 'maintenance-overlay-404';
+          overlay404.innerHTML = `
+            <div class="maintenance-content">
+              <div class="maintenance-code">404</div>
+              <h2 class="maintenance-title">Site Under Maintenance</h2>
+              <p class="maintenance-msg" id="maintenanceCustomMsg">${data.config404.customMessage || 'Page Not Found — Eureco Digital Agency'}</p>
+              <div style="margin-top: 28px; display: flex; gap: 12px; justify-content: center;">
+                <a href="admin.html" style="padding: 12px 24px; text-decoration: none; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; background: var(--accent); color: #FFF; border: none; cursor: pointer;">Open Admin Portal ⚙</a>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay404);
+        } else {
+          overlay404.style.display = 'flex';
+          const msgEl = document.getElementById('maintenanceCustomMsg');
+          if (msgEl && data.config404.customMessage) {
+            msgEl.textContent = data.config404.customMessage;
+          }
+        }
+        document.body.style.overflow = 'hidden';
+      } else {
+        if (overlay404) {
+          overlay404.style.display = 'none';
+          document.body.style.overflow = '';
         }
       }
 
