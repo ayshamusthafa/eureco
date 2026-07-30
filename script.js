@@ -445,12 +445,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Header & Footer Logos
+      if (data.logoLightUrl) {
+        document.querySelectorAll('.logo-light').forEach(img => img.src = data.logoLightUrl);
+      }
+      if (data.logoDarkUrl) {
+        document.querySelectorAll('.logo-dark').forEach(img => img.src = data.logoDarkUrl);
+      }
+
+      // Stats Counters Bar
+      if (data.stats && Array.isArray(data.stats) && data.stats.length >= 3) {
+        const statItems = document.querySelectorAll('.stats-bar .stat-item');
+        data.stats.forEach((st, idx) => {
+          if (statItems[idx]) {
+            const numEl = statItems[idx].querySelector('.stat-number');
+            const labelEl = statItems[idx].querySelector('.stat-label');
+            if (numEl) {
+              const numericVal = parseInt(st.number.replace(/[^0-9]/g, '')) || 0;
+              const suffixVal = st.number.replace(/[0-9]/g, '') || '+';
+              numEl.setAttribute('data-target', numericVal);
+              numEl.setAttribute('data-suffix', suffixVal);
+              numEl.textContent = st.number;
+            }
+            if (labelEl) {
+              labelEl.textContent = st.label;
+            }
+          }
+        });
+      }
+
+      // 404 Error Mode Redirect / Overlay
+      if (data.config404 && data.config404.enabled && !window.location.pathname.endsWith('404.html') && !window.location.pathname.endsWith('admin.html')) {
+        window.location.href = '404.html';
+      }
+
     } catch(e) {
       console.error('Error applying dynamic site data:', e);
     }
   }
 
+  // Initial load
   applyDynamicSiteData();
+
+  // Instant Real-Time Cross-Tab Sync
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'eureco_site_data') {
+      applyDynamicSiteData();
+    }
+  });
 
   // ============================================================
   // SMOOTH SCROLL for anchor links
