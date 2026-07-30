@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Submit button
+  // Save Contact Form Submission into localStorage for Admin Panel
   if (submitBtn) {
     submitBtn.addEventListener('click', () => {
       const name = nameInput ? nameInput.value.trim() : '';
@@ -302,6 +302,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Save submission entry to localStorage
+      try {
+        const raw = localStorage.getItem('eureco_contact_submissions');
+        const submissions = raw ? JSON.parse(raw) : [];
+        submissions.unshift({
+          date: new Date().toLocaleString(),
+          name: name,
+          email: email,
+          service: selectedServices.join(', '),
+          message: `Inquiry for ${selectedServices.join(', ')}`
+        });
+        localStorage.setItem('eureco_contact_submissions', JSON.stringify(submissions));
+      } catch(e) {
+        console.error('Error saving submission:', e);
+      }
+
       // Success animation
       submitBtn.textContent = 'SENT ✓';
       submitBtn.style.background = '#3D6CAE';
@@ -309,6 +325,132 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.style.color = '#FFFFFF';
     });
   }
+
+  // ============================================================
+  // DYNAMIC CMS SITE DATA HYDRATOR
+  // ============================================================
+  function applyDynamicSiteData() {
+    const raw = localStorage.getItem('eureco_site_data');
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+
+      // Title & Favicon
+      if (data.siteTitle) document.title = data.siteTitle;
+      if (data.faviconUrl) {
+        let fav = document.querySelector('link[rel="icon"]');
+        if (!fav) {
+          fav = document.createElement('link');
+          fav.rel = 'icon';
+          document.head.appendChild(fav);
+        }
+        fav.href = data.faviconUrl;
+      }
+
+      // Hidden Containers (Hero, Services, Projects, Awards, Contact, Footer)
+      if (data.hiddenContainers) {
+        const secs = {
+          hero: document.getElementById('hero'),
+          services: document.getElementById('services'),
+          projects: document.getElementById('projects'),
+          awards: document.getElementById('awards'),
+          contact: document.getElementById('contact'),
+          footer: document.querySelector('.footer')
+        };
+        Object.keys(data.hiddenContainers).forEach(key => {
+          if (secs[key]) {
+            secs[key].style.display = data.hiddenContainers[key] ? 'none' : '';
+          }
+        });
+      }
+
+      // Hero Lines
+      if (data.hero) {
+        const l1 = document.querySelector('.hero-line--creative');
+        const l2 = document.querySelector('.hero-line--digital');
+        const l3 = document.querySelector('.hero-line--agency');
+        const img3d = document.querySelector('.hero-3d-image img');
+        const tag = document.querySelector('.hero-tagline p');
+
+        if (l1 && data.hero.line1) l1.textContent = data.hero.line1;
+        if (l2 && data.hero.line2) l2.textContent = data.hero.line2;
+        if (l3 && data.hero.line3) l3.textContent = data.hero.line3;
+        if (img3d && data.hero.image3d) img3d.src = data.hero.image3d;
+        if (tag && data.hero.tagline) tag.textContent = data.hero.tagline;
+      }
+
+      // Services List
+      if (data.services && Array.isArray(data.services) && data.services.length > 0) {
+        const container = document.querySelector('.services .container');
+        if (container) {
+          const existingRows = container.querySelectorAll('.service-row');
+          existingRows.forEach(r => r.remove());
+
+          data.services.forEach((s, idx) => {
+            const row = document.createElement('div');
+            row.className = `service-row reveal-left delay-${(idx % 3) + 1}`;
+            const tagsHtml = s.tags.split(',').map(t => `<span class="service-tag">${t.trim()}</span>`).join('');
+            row.innerHTML = `
+              <div class="service-row-num">${s.num}</div>
+              <div class="service-row-title">${s.title}</div>
+              <div class="service-row-tags">${tagsHtml}</div>
+            `;
+            container.appendChild(row);
+          });
+        }
+      }
+
+      // Projects Grid
+      if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
+        const grid = document.querySelector('.projects-content');
+        if (grid) {
+          const existingCards = grid.querySelectorAll('.project-card');
+          existingCards.forEach(c => c.remove());
+
+          data.projects.forEach((p, idx) => {
+            const card = document.createElement('div');
+            card.className = `project-card reveal-right delay-${(idx % 3) + 1}`;
+            card.innerHTML = `
+              <div class="project-card-image">
+                <img src="${p.image}" alt="${p.title}">
+              </div>
+              <div class="project-card-info">
+                <h4 class="project-card-title">${p.title}</h4>
+                <p class="project-card-desc">${p.category}</p>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+        }
+      }
+
+      // Awards Table
+      if (data.awards && Array.isArray(data.awards) && data.awards.length > 0) {
+        const table = document.querySelector('.awards-table');
+        if (table) {
+          const existingRows = table.querySelectorAll('.award-row');
+          existingRows.forEach(r => r.remove());
+
+          data.awards.forEach((a, idx) => {
+            const row = document.createElement('div');
+            row.className = `award-row ${idx === 1 ? 'highlighted' : ''} reveal-right delay-${(idx % 3) + 1}`;
+            row.innerHTML = `
+              <div class="award-row-num">${a.num}</div>
+              <div class="award-row-name">${a.name}</div>
+              <div class="award-row-project">${a.project}</div>
+              <div class="award-row-year">${a.year}</div>
+            `;
+            table.appendChild(row);
+          });
+        }
+      }
+
+    } catch(e) {
+      console.error('Error applying dynamic site data:', e);
+    }
+  }
+
+  applyDynamicSiteData();
 
   // ============================================================
   // SMOOTH SCROLL for anchor links

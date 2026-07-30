@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Page Not Found | Eureco Agency</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .error-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      position: relative;
+    }
+
+    .error-code {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(6rem, 20vw, 14rem);
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 0.9;
+      letter-spacing: -6px;
+      margin-bottom: 20px;
+    }
+
+    .error-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .error-desc {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 460px;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="error-page">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Page Not Found</h1>
+    <p class="error-desc" id="errorMsg">The page you are looking for might have been removed, renamed, or is temporarily unavailable.</p>
+    
+    <div class="error-actions">
+      <a href="index.html" class="hero-service-item" style="padding: 14px 28px; background: var(--accent); color: #FFF; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; text-decoration: none;">
+        Return to Homepage ↗
+      </a>
+      <a href="admin.html" class="hero-service-item" style="padding: 14px 28px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; text-decoration: none;">
+        Admin Dashboard
+      </a>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const raw = localStorage.getItem('eureco_site_data');
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          if (data.config404 && data.config404.customMessage) {
+            document.getElementById('errorMsg').textContent = data.config404.customMessage;
+          }
+        } catch(e) {}
+      }
+    });
+  </script>
+</body>
+</html>

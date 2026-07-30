@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eureco — Admin Control Panel</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Admin Specific Styles -->
+  <style>
+    :root {
+      --admin-sidebar-width: 260px;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Login Screen Overlay */
+    .admin-login-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .admin-login-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo {
+      height: 48px;
+      margin-bottom: 16px;
+      object-fit: contain;
+    }
+
+    .login-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .login-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .login-form-group {
+      margin-bottom: 20px;
+    }
+
+    .login-form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      margin-top: 10px;
+    }
+
+    .login-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .login-error {
+      color: #E74C3C;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+
+    /* Admin App Layout */
+    .admin-app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Admin Sidebar */
+    .admin-sidebar {
+      width: var(--admin-sidebar-width);
+      background: var(--card-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    .admin-sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-sidebar-logo {
+      height: 36px;
+    }
+
+    .admin-sidebar-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .admin-sidebar-badge {
+      font-size: 0.7rem;
+      background: var(--accent);
+      color: #FFF;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-nav {
+      padding: 20px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+    }
+
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .admin-nav-item:hover, .admin-nav-item.active {
+      background: rgba(61, 108, 174, 0.15);
+      color: var(--accent);
+    }
+
+    .admin-nav-item.active {
+      font-weight: 700;
+    }
+
+    .admin-nav-item svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .admin-sidebar-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Main Content Area */
+    .admin-main {
+      margin-left: var(--admin-sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .admin-header {
+      height: 70px;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    .admin-header-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .admin-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .admin-btn {
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .admin-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .admin-btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #FFFFFF;
+    }
+
+    .admin-btn-primary:hover {
+      opacity: 0.9;
+      color: #FFFFFF;
+    }
+
+    .admin-btn-danger {
+      background: rgba(231, 76, 60, 0.1);
+      border-color: #E74C3C;
+      color: #E74C3C;
+    }
+
+    .admin-btn-danger:hover {
+      background: #E74C3C;
+      color: #FFFFFF;
+    }
+
+    .admin-content {
+      padding: 32px;
+      flex: 1;
+    }
+
+    /* Tab Sections */
+    .admin-tab-content {
+      display: none;
+    }
+
+    .admin-tab-content.active {
+      display: block;
+    }
+
+    /* Cards & Layout Grid */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .admin-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 20px var(--card-shadow);
+    }
+
+    .admin-card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Stats Overview Box */
+    .stat-box-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-box-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Switch Toggle */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--border-color);
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Containers Visibility Control List */
+    .container-toggle-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .container-toggle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    .container-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .container-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Form Fields */
+    .admin-form-group {
+      margin-bottom: 20px;
+    }
+
+    .admin-form-group label {
+      display: block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .admin-input, .admin-textarea, .admin-select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .admin-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .admin-input:focus, .admin-textarea:focus, .admin-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Tables */
+    .admin-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .admin-table th, .admin-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.88rem;
+    }
+
+    .admin-table th {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      background: var(--input-bg);
+    }
+
+    .admin-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Toast Notification */
+    .admin-toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 14px 24px;
+      background: var(--accent);
+      color: #FFFFFF;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .admin-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Responsive Mobile Sidebar */
+    @media (max-width: 900px) {
+      .admin-sidebar {
+        width: 70px;
+      }
+      .admin-sidebar-brand, .admin-sidebar-badge, .admin-nav-item span {
+        display: none;
+      }
+      .admin-main {
+        margin-left: 70px;
+      }
+      .admin-header {
+        padding: 0 16px;
+      }
+      .admin-content {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== LOGIN OVERLAY ========== -->
+  <div class="admin-login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="assets/images/logo-dark.png" alt="Eureco Logo" class="login-logo logo-dark">
+        <h2 class="login-title">Admin Portal</h2>
+        <p class="login-subtitle">Sign in to manage Eureco website containers and data</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="login-form-group">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" class="login-input" placeholder="admin" required value="admin">
+        </div>
+        <div class="login-form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" class="login-input" placeholder="••••••••" required value="eureco123">
+        </div>
+        <button type="submit" class="login-btn">Log In to Dashboard</button>
+        <div class="login-error" id="loginError">Invalid credentials. Default: admin / eureco123</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== ADMIN APP MAIN ========== -->
+  <div class="admin-app" id="adminApp">
+    
+    <!-- Sidebar Nav -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <img src="assets/images/logo-icon.png" alt="Eureco Logo" class="admin-sidebar-logo">
+        <span class="admin-sidebar-brand">EURECO</span>
+        <span class="admin-sidebar-badge">CMS</span>
+      </div>
+
+      <nav class="admin-nav">
+        <a class="admin-nav-item active" data-tab="dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a class="admin-nav-item" data-tab="containers">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span>Containers & Visibility</span>
+        </a>
+        <a class="admin-nav-item" data-tab="hero">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Hero & Stats</span>
+        </a>
+        <a class="admin-nav-item" data-tab="services">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Services</span>
+        </a>
+        <a class="admin-nav-item" data-tab="projects">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Projects Grid</span>
+        </a>
+        <a class="admin-nav-item" data-tab="awards">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+          <span>Awards</span>
+        </a>
+        <a class="admin-nav-item" data-tab="submissions">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>Form Submissions</span>
+        </a>
+        <a class="admin-nav-item" data-tab="settings">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Site Settings & 404</span>
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <button class="admin-btn admin-btn-danger" id="logoutBtn" style="width: 100%; justify-content: center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Log Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 class="admin-header-title" id="tabHeaderTitle">Dashboard Overview</h1>
+        
+        <div class="admin-header-actions">
+          <button class="theme-toggle" id="adminThemeToggle" aria-label="Toggle theme">
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+          
+          <a href="index.html" target="_blank" class="admin-btn admin-btn-primary">
+            View Live Site ↗
+          </a>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- TAB 1: DASHBOARD OVERVIEW -->
+        <section class="admin-tab-content active" id="tab-dashboard">
+          <div class="admin-grid">
+            <div class="admin-card">
+              <div class="admin-card-title">Contact Submissions</div>
+              <div class="stat-box-value" id="dashSubmissionsCount">0</div>
+              <div class="stat-box-label">Total inquiries received from site form</div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title">Active Services</div>
+              <div class="stat-box-value" id="dashServicesCount">3</div>
+              <div class="stat-box-label">Services listed on portfolio</div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title">Active Projects</div>
+              <div class="stat-box-value" id="dashProjectsCount">3</div>
+              <div class="stat-box-label">Projects in grid display</div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title">404 Custom Status</div>
+              <div class="stat-box-value" id="dash404Status">OFF</div>
+              <div class="stat-box-label">Toggle custom error landing page</div>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-title">
+              <span>Recent Contact Inquiries</span>
+              <button class="admin-btn" onclick="switchTab('submissions')">View All Submissions</button>
+            </div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Service</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody id="recentSubmissionsBody">
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No form submissions yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: CONTAINERS & VISIBILITY CONTROL -->
+        <section class="admin-tab-content" id="tab-containers">
+          <div class="admin-card">
+            <div class="admin-card-title">
+              <span>Section & Container Visibility</span>
+              <span class="admin-sidebar-badge">Live Controls</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">
+              Toggle switches to show or hide any main layout container on the live website instantaneously.
+            </p>
+
+            <div class="container-toggle-list">
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Hero Section & Stats Bar</span>
+                  <span class="container-desc">Header typography, 3D float graphic, and 150+/100+/90+ counter bar</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleHero" checked data-container="hero">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Services Section</span>
+                  <span class="container-desc">Interactive row accordion for Social Media, Branding, and Web Dev</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleServices" checked data-container="services">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Projects Section (2x2 Grid)</span>
+                  <span class="container-desc">Dynamic project cards display grid and background scrolling typography</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleProjects" checked data-container="projects">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Awards Section</span>
+                  <span class="container-desc">Recognition table showing award achievements and years</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleAwards" checked data-container="awards">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Contact Form Container</span>
+                  <span class="container-desc">Interactive inquiry form and agency location details</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleContact" checked data-container="contact">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Footer Container</span>
+                  <span class="container-desc">Bottom navigation, newsletter, brand copyright, and social links</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleFooter" checked data-container="footer">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: HERO & STATS CONTENT EDITING -->
+        <section class="admin-tab-content" id="tab-hero">
+          <div class="admin-card">
+            <div class="admin-card-title">Edit Hero Container Typography & Content</div>
+            
+            <form id="heroForm">
+              <div class="admin-form-group">
+                <label>Hero Line 1 (Bold Heading)</label>
+                <input type="text" id="heroLine1" class="admin-input" value="CREATIVE">
+              </div>
+              <div class="admin-form-group">
+                <label>Hero Line 2 (Italic Accent)</label>
+                <input type="text" id="heroLine2" class="admin-input" value="Digital">
+              </div>
+              <div class="admin-form-group">
+                <label>Hero Line 3 (Bold Heading)</label>
+                <input type="text" id="heroLine3" class="admin-input" value="AGENCY">
+              </div>
+              <div class="admin-form-group">
+                <label>Hero 3D Floating Graphic Image Path / URL</label>
+                <input type="text" id="hero3dImage" class="admin-input" value="assets/images/hero-3d.png">
+              </div>
+              <div class="admin-form-group">
+                <label>Hero Tagline Text</label>
+                <input type="text" id="heroTagline" class="admin-input" value="Brand with data driven marketing">
+              </div>
+
+              <button type="submit" class="admin-btn admin-btn-primary">Save Hero Changes</button>
+            </form>
+          </div>
+
+          <div class="admin-card" style="margin-top: 24px;">
+            <div class="admin-card-title">Edit Stats Counter Values</div>
+            
+            <form id="statsForm">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div class="admin-form-group">
+                  <label>Stat 1 Number</label>
+                  <input type="text" id="stat1Num" class="admin-input" value="150+">
+                  <label style="margin-top: 6px;">Stat 1 Label</label>
+                  <input type="text" id="stat1Label" class="admin-input" value="success projects">
+                </div>
+                <div class="admin-form-group">
+                  <label>Stat 2 Number</label>
+                  <input type="text" id="stat2Num" class="admin-input" value="100+">
+                  <label style="margin-top: 6px;">Stat 2 Label</label>
+                  <input type="text" id="stat2Label" class="admin-input" value="product launched">
+                </div>
+                <div class="admin-form-group">
+                  <label>Stat 3 Number</label>
+                  <input type="text" id="stat3Num" class="admin-input" value="90+">
+                  <label style="margin-top: 6px;">Stat 3 Label</label>
+                  <input type="text" id="stat3Label" class="admin-input" value="startup company">
+                </div>
+              </div>
+
+              <button type="submit" class="admin-btn admin-btn-primary">Save Stats Changes</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- TAB 4: SERVICES MANAGER -->
+        <section class="admin-tab-content" id="tab-services">
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">Add / Edit Service Container</div>
+            <form id="serviceForm">
+              <input type="hidden" id="serviceEditIndex" value="-1">
+              <div class="admin-form-group">
+                <label>Service Number (e.g. 01, 02)</label>
+                <input type="text" id="serviceNum" class="admin-input" placeholder="04" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Service Title</label>
+                <input type="text" id="serviceTitle" class="admin-input" placeholder="SEO & Performance Marketing" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Service Tags (comma separated)</label>
+                <input type="text" id="serviceTags" class="admin-input" placeholder="Google Ads, Analytics, Content Strategy">
+              </div>
+              <div style="display: flex; gap: 12px;">
+                <button type="submit" class="admin-btn admin-btn-primary" id="saveServiceBtn">Add Service</button>
+                <button type="button" class="admin-btn" id="cancelServiceBtn" style="display:none;" onclick="resetServiceForm()">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-title">Active Services List</div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Tags</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="servicesTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: PROJECTS GRID MANAGER -->
+        <section class="admin-tab-content" id="tab-projects">
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">Add / Edit Project Item</div>
+            <form id="projectForm">
+              <input type="hidden" id="projectEditIndex" value="-1">
+              <div class="admin-form-group">
+                <label>Project Name / Title</label>
+                <input type="text" id="projectTitle" class="admin-input" placeholder="Apex Studio" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Category / Subtitle</label>
+                <input type="text" id="projectCategory" class="admin-input" placeholder="Logo and Branding" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Image File Path or URL</label>
+                <input type="text" id="projectImage" class="admin-input" placeholder="assets/images/project-1.png" required>
+              </div>
+              <div style="display: flex; gap: 12px;">
+                <button type="submit" class="admin-btn admin-btn-primary" id="saveProjectBtn">Add Project</button>
+                <button type="button" class="admin-btn" id="cancelProjectBtn" style="display:none;" onclick="resetProjectForm()">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-title">Portfolio Projects Grid</div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Preview</th>
+                    <th>Project Name</th>
+                    <th>Category</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="projectsTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 6: AWARDS MANAGER -->
+        <section class="admin-tab-content" id="tab-awards">
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">Add / Edit Award Item</div>
+            <form id="awardForm">
+              <input type="hidden" id="awardEditIndex" value="-1">
+              <div class="admin-form-group">
+                <label>Award Serial (e.g. 01, 02)</label>
+                <input type="text" id="awardNum" class="admin-input" placeholder="04" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Award Name</label>
+                <input type="text" id="awardName" class="admin-input" placeholder="Awwwards Site of the Day" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Associated Project</label>
+                <input type="text" id="awardProject" class="admin-input" placeholder="NovaBrand" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Year</label>
+                <input type="text" id="awardYear" class="admin-input" placeholder="2025" required>
+              </div>
+              <div style="display: flex; gap: 12px;">
+                <button type="submit" class="admin-btn admin-btn-primary" id="saveAwardBtn">Add Award</button>
+                <button type="button" class="admin-btn" id="cancelAwardBtn" style="display:none;" onclick="resetAwardForm()">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-title">Awards List</div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Award Name</th>
+                    <th>Project</th>
+                    <th>Year</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="awardsTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 7: FORM SUBMISSIONS -->
+        <section class="admin-tab-content" id="tab-submissions">
+          <div class="admin-card">
+            <div class="admin-card-title">
+              <span>Contact Us Form Submissions</span>
+              <button class="admin-btn admin-btn-danger" onclick="clearAllSubmissions()">Clear All Entries</button>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+              Live records of all client messages submitted through the website form.
+            </p>
+
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>Requested Service</th>
+                    <th>Client Message</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="submissionsTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 8: SITE SETTINGS & 404 TOGGLE -->
+        <section class="admin-tab-content" id="tab-settings">
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">General Site Configuration & Branding</div>
+            <form id="settingsForm">
+              <div class="admin-form-group">
+                <label>Browser Page Title</label>
+                <input type="text" id="siteTitle" class="admin-input" value="Eureco — Creative Digital Agency">
+              </div>
+              <div class="admin-form-group">
+                <label>Favicon Icon Path / URL</label>
+                <input type="text" id="faviconUrl" class="admin-input" value="assets/images/logo-icon.png">
+              </div>
+              <div class="admin-form-group">
+                <label>Header Light Logo Path</label>
+                <input type="text" id="logoLight" class="admin-input" value="assets/images/logo-light.png">
+              </div>
+              <div class="admin-form-group">
+                <label>Header Dark Logo Path</label>
+                <input type="text" id="logoDark" class="admin-input" value="assets/images/logo-dark.png">
+              </div>
+
+              <button type="submit" class="admin-btn admin-btn-primary">Save Site Settings</button>
+            </form>
+          </div>
+
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">404 Error Page Settings & Toggle</div>
+            <div class="container-toggle-item" style="margin-bottom: 20px;">
+              <div class="container-info">
+                <span class="container-name">Enable Custom 404 Mode</span>
+                <span class="container-desc">When active, forces 404 page redirect or maintenance overlay</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle404">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="admin-form-group">
+              <label>Custom 404 Message</label>
+              <input type="text" id="custom404Text" class="admin-input" value="Page Not Found — Eureco Digital Agency">
+            </div>
+            <button class="admin-btn admin-btn-primary" onclick="save404Settings()">Save 404 Configuration</button>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-title">Admin Account Password</div>
+            <form id="passwordForm">
+              <div class="admin-form-group">
+                <label>Current Username</label>
+                <input type="text" id="adminUsername" class="admin-input" value="admin" readonly>
+              </div>
+              <div class="admin-form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" class="admin-input" placeholder="Enter new password" required>
+              </div>
+              <button type="submit" class="admin-btn admin-btn-primary">Update Admin Password</button>
+            </form>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Toast Notification element -->
+  <div class="admin-toast" id="adminToast">Changes saved successfully!</div>
+
+  <!-- Admin JavaScript logic -->
+  <script src="admin.js"></script>
+</body>
+</html>
