@@ -347,6 +347,36 @@ document.addEventListener('DOMContentLoaded', () => {
         fav.href = data.faviconUrl;
       }
 
+      // Logos (Light & Dark)
+      if (data.logoLightUrl) {
+        const logoLights = document.querySelectorAll('.logo-light');
+        logoLights.forEach(img => img.src = data.logoLightUrl);
+      }
+      if (data.logoDarkUrl) {
+        const logoDarks = document.querySelectorAll('.logo-dark');
+        logoDarks.forEach(img => img.src = data.logoDarkUrl);
+      }
+
+      // Stats Counters
+      if (data.stats && Array.isArray(data.stats)) {
+        const statItems = document.querySelectorAll('.stat-item');
+        data.stats.forEach((st, idx) => {
+          if (statItems[idx]) {
+            const numEl = statItems[idx].querySelector('.stat-number');
+            const labelEl = statItems[idx].querySelector('.stat-label');
+            if (numEl && st.number) {
+              const match = st.number.match(/^(\d+)(.*)$/);
+              if (match) {
+                numEl.setAttribute('data-target', match[1]);
+                numEl.setAttribute('data-suffix', match[2]);
+              }
+              numEl.textContent = st.number;
+            }
+            if (labelEl && st.label) labelEl.textContent = st.label;
+          }
+        });
+      }
+
       // Hidden Containers (Hero, Services, Projects, Awards, Contact, Footer)
       if (data.hiddenContainers) {
         const secs = {
@@ -388,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           data.services.forEach((s, idx) => {
             const row = document.createElement('div');
-            row.className = `service-row reveal-left delay-${(idx % 3) + 1}`;
+            row.className = `service-row reveal-left delay-${(idx % 3) + 1} revealed`;
             const tagsHtml = s.tags.split(',').map(t => `<span class="service-tag">${t.trim()}</span>`).join('');
             row.innerHTML = `
               <div class="service-row-num">${s.num}</div>
@@ -396,6 +426,25 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="service-row-tags">${tagsHtml}</div>
             `;
             container.appendChild(row);
+          });
+
+          // Re-bind hover logic for newly generated service rows
+          const newRows = container.querySelectorAll('.service-row');
+          newRows.forEach(row => {
+            row.addEventListener('mouseenter', () => {
+              newRows.forEach(r => {
+                if (r !== row) {
+                  const title = r.querySelector('.service-row-title');
+                  if (title) title.style.opacity = '0.3';
+                }
+              });
+            });
+            row.addEventListener('mouseleave', () => {
+              newRows.forEach(r => {
+                const title = r.querySelector('.service-row-title');
+                if (title) title.style.opacity = '';
+              });
+            });
           });
         }
       }
@@ -409,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           data.projects.forEach((p, idx) => {
             const card = document.createElement('div');
-            card.className = `project-card reveal-right delay-${(idx % 3) + 1}`;
+            card.className = `project-card reveal-right delay-${(idx % 3) + 1} revealed`;
             card.innerHTML = `
               <div class="project-card-image">
                 <img src="${p.image}" alt="${p.title}">
@@ -433,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           data.awards.forEach((a, idx) => {
             const row = document.createElement('div');
-            row.className = `award-row ${idx === 1 ? 'highlighted' : ''} reveal-right delay-${(idx % 3) + 1}`;
+            row.className = `award-row ${idx === 1 ? 'highlighted' : ''} reveal-right delay-${(idx % 3) + 1} revealed`;
             row.innerHTML = `
               <div class="award-row-num">${a.num}</div>
               <div class="award-row-name">${a.name}</div>
@@ -445,53 +494,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Header & Footer Logos
-      if (data.logoLightUrl) {
-        document.querySelectorAll('.logo-light').forEach(img => img.src = data.logoLightUrl);
-      }
-      if (data.logoDarkUrl) {
-        document.querySelectorAll('.logo-dark').forEach(img => img.src = data.logoDarkUrl);
-      }
-
-      // Stats Counters Bar
-      if (data.stats && Array.isArray(data.stats) && data.stats.length >= 3) {
-        const statItems = document.querySelectorAll('.stats-bar .stat-item');
-        data.stats.forEach((st, idx) => {
-          if (statItems[idx]) {
-            const numEl = statItems[idx].querySelector('.stat-number');
-            const labelEl = statItems[idx].querySelector('.stat-label');
-            if (numEl) {
-              const numericVal = parseInt(st.number.replace(/[^0-9]/g, '')) || 0;
-              const suffixVal = st.number.replace(/[0-9]/g, '') || '+';
-              numEl.setAttribute('data-target', numericVal);
-              numEl.setAttribute('data-suffix', suffixVal);
-              numEl.textContent = st.number;
-            }
-            if (labelEl) {
-              labelEl.textContent = st.label;
-            }
-          }
-        });
-      }
-
-      // 404 Error Mode Redirect / Overlay
-      if (data.config404 && data.config404.enabled && !window.location.pathname.endsWith('404.html') && !window.location.pathname.endsWith('admin.html')) {
-        window.location.href = '404.html';
-      }
-
     } catch(e) {
       console.error('Error applying dynamic site data:', e);
     }
   }
 
-  // Initial load
+  // Apply initially and listen for instant live updates across tabs/windows
   applyDynamicSiteData();
 
-  // Instant Real-Time Cross-Tab Sync
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'eureco_site_data') {
-      applyDynamicSiteData();
-    }
+  window.addEventListener('storage', () => {
+    applyDynamicSiteData();
   });
 
   // ============================================================

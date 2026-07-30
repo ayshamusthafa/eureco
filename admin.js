@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveSiteData(data) {
     localStorage.setItem('eureco_site_data', JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent('siteDataUpdated'));
-    showToast('Changes saved to live site!');
+    window.dispatchEvent(new Event('storage'));
+    showToast('Changes saved & updated live!');
   }
 
   function getSubmissions() {
