@@ -59,15 +59,31 @@
       margin-bottom: 32px;
     }
 
-    .login-logo {
-      height: 48px;
+    .login-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
       margin-bottom: 16px;
+    }
+
+    .login-brand-icon {
+      height: 42px;
+      width: auto;
       object-fit: contain;
+    }
+
+    .login-brand-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
     }
 
     .login-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--text-primary);
     }
@@ -558,7 +574,10 @@
   <div class="admin-login-screen" id="loginScreen">
     <div class="login-card">
       <div class="login-header">
-        <img src="assets/images/logo-dark.png" alt="Eureco Logo" class="login-logo logo-dark">
+        <div class="login-brand">
+          <img src="assets/images/logo-icon.png" alt="Eureco Logo Icon" class="login-brand-icon">
+          <span class="login-brand-text">Eureco</span>
+        </div>
         <h2 class="login-title">Admin Portal</h2>
         <p class="login-subtitle">Sign in to manage Eureco website containers and data</p>
       </div>
