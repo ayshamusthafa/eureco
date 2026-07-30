@@ -1515,6 +1515,7 @@ button {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
     margin-top: 40px;
+    text-align: center;
   }
 
   .stat-item {
@@ -1523,11 +1524,27 @@ button {
     border-bottom: 1px solid var(--stat-border);
     padding-bottom: 20px;
     overflow: hidden;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .stat-item:nth-child(odd) {
     border-right: 1px solid var(--stat-border);
-    padding-right: 20px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .stat-item:nth-child(even) {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .stat-brand-desc {
+    margin: 4px auto 0;
+    text-align: center;
   }
 
   .stat-item:nth-child(3),
@@ -1644,13 +1661,27 @@ button {
   .stats-bar {
     grid-template-columns: 1fr;
     gap: 20px;
+    text-align: center;
   }
 
   .stat-item {
     border-right: none !important;
     padding-right: 0 !important;
+    padding-left: 0 !important;
     border-bottom: 1px solid var(--stat-border);
     padding-bottom: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-number,
+  .stat-label,
+  .stat-brand,
+  .stat-brand-desc {
+    text-align: center;
   }
 
   .stat-item:last-child {
