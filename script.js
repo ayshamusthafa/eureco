@@ -528,9 +528,6 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="maintenance-code">404</div>
               <h2 class="maintenance-title">Site Under Maintenance</h2>
               <p class="maintenance-msg" id="maintenanceCustomMsg">${data.config404.customMessage || 'Page Not Found — Eureco Digital Agency'}</p>
-              <div style="margin-top: 28px; display: flex; gap: 12px; justify-content: center;">
-                <a href="admin.html" style="padding: 12px 24px; text-decoration: none; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; background: var(--accent); color: #FFF; border: none; cursor: pointer;">Open Admin Portal ⚙</a>
-              </div>
             </div>
           `;
           document.body.appendChild(overlay404);
