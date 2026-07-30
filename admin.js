@@ -49,6 +49,16 @@ document.addEventListener('DOMContentLoaded', () => {
       { num: '02', name: 'Awwwards Site of the Day', project: 'NovaBrand', year: '2024' },
       { num: '03', name: 'FWA of the Day', project: 'Artisan Studio', year: '2024' }
     ],
+    footer: {
+      email: 'eureco@mail.com',
+      copyright: 'copyright 2025, all reserves.',
+      brandText: 'EURECO',
+      socials: [
+        { name: 'Envato', url: 'https://envato.com' },
+        { name: 'Dribbble', url: 'https://dribbble.com' },
+        { name: 'Behance', url: 'https://behance.net' }
+      ]
+    },
     config404: {
       enabled: false,
       customMessage: 'Page Not Found — Eureco Digital Agency'
@@ -169,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     projects: 'Projects Grid Manager',
     awards: 'Awards Recognition Manager',
     submissions: 'Contact Form Submissions',
+    footer: 'Footer Content Manager',
     settings: 'Site Branding & 404 Configuration'
   };
 
@@ -237,6 +248,22 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('stat2Label').value = siteData.stats[1].label;
       document.getElementById('stat3Num').value = siteData.stats[2].number;
       document.getElementById('stat3Label').value = siteData.stats[2].label;
+    }
+
+    // Render Footer Content
+    if (siteData.footer) {
+      document.getElementById('footerEmail').value = siteData.footer.email || 'eureco@mail.com';
+      document.getElementById('footerCopyright').value = siteData.footer.copyright || 'copyright 2025, all reserves.';
+      document.getElementById('footerBrandText').value = siteData.footer.brandText || 'EURECO';
+
+      if (siteData.footer.socials && siteData.footer.socials.length >= 3) {
+        document.getElementById('social1Name').value = siteData.footer.socials[0].name;
+        document.getElementById('social1Url').value = siteData.footer.socials[0].url;
+        document.getElementById('social2Name').value = siteData.footer.socials[1].name;
+        document.getElementById('social2Url').value = siteData.footer.socials[1].url;
+        document.getElementById('social3Name').value = siteData.footer.socials[2].name;
+        document.getElementById('social3Url').value = siteData.footer.socials[2].url;
+      }
     }
 
     // Render Settings & 404
@@ -559,6 +586,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initAdminDashboard();
     showToast('All submissions cleared');
   };
+
+  // ============================================================
+  // FOOTER CONTENT FORM
+  // ============================================================
+  document.getElementById('footerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const siteData = getSiteData();
+    siteData.footer = {
+      email: document.getElementById('footerEmail').value.trim(),
+      copyright: document.getElementById('footerCopyright').value.trim(),
+      brandText: document.getElementById('footerBrandText').value.trim(),
+      socials: [
+        { name: document.getElementById('social1Name').value.trim(), url: document.getElementById('social1Url').value.trim() },
+        { name: document.getElementById('social2Name').value.trim(), url: document.getElementById('social2Url').value.trim() },
+        { name: document.getElementById('social3Name').value.trim(), url: document.getElementById('social3Url').value.trim() }
+      ]
+    };
+    saveSiteData(siteData);
+  });
 
   // ============================================================
   // SITE SETTINGS & 404 CONFIG

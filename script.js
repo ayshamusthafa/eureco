@@ -513,6 +513,36 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             table.appendChild(row);
           });
+      // Footer Content & Social Links Hydrator
+      if (data.footer) {
+        const fEmail = document.querySelector('.footer-email');
+        const fCopy = document.querySelector('.footer-copyright');
+        const fBrand = document.querySelector('.footer-brand-text');
+
+        if (fEmail && data.footer.email) {
+          fEmail.textContent = data.footer.email;
+          fEmail.href = `mailto:${data.footer.email}`;
+        }
+        if (fCopy && data.footer.copyright) fCopy.textContent = data.footer.copyright;
+        if (fBrand && data.footer.brandText) fBrand.textContent = data.footer.brandText;
+
+        if (data.footer.socials && Array.isArray(data.footer.socials)) {
+          const fLinksContainer = document.querySelector('.footer-links');
+          if (fLinksContainer) {
+            const extLinks = fLinksContainer.querySelectorAll('a[target="_blank"]');
+            extLinks.forEach(el => el.remove());
+
+            data.footer.socials.forEach(soc => {
+              if (soc.name && soc.url) {
+                const a = document.createElement('a');
+                a.href = soc.url;
+                a.target = '_blank';
+                a.className = 'footer-link';
+                a.textContent = soc.name;
+                fLinksContainer.appendChild(a);
+              }
+            });
+          }
         }
       }
 

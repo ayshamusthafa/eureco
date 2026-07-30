@@ -640,6 +640,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           <span>Form Submissions</span>
         </a>
+        <a class="admin-nav-item" data-tab="footer">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          <span>Footer Content</span>
+        </a>
         <a class="admin-nav-item" data-tab="settings">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <span>Site Settings & 404</span>
@@ -1029,9 +1033,70 @@
               </table>
             </div>
           </div>
+        <!-- TAB 8: FOOTER CONTENT MANAGER -->
+        <section class="admin-tab-content" id="tab-footer">
+          <div class="admin-card">
+            <div class="admin-card-title">Edit Footer Section Content & Social Links</div>
+            
+            <form id="footerForm">
+              <div class="admin-form-group">
+                <label>Footer Contact Email Address</label>
+                <input type="email" id="footerEmail" class="admin-input" value="eureco@mail.com">
+              </div>
+              
+              <div class="admin-form-group">
+                <label>Footer Copyright Text</label>
+                <input type="text" id="footerCopyright" class="admin-input" value="copyright 2025, all reserves.">
+              </div>
+
+              <div class="admin-form-group">
+                <label>Footer Large Brand Overlay Text</label>
+                <input type="text" id="footerBrandText" class="admin-input" value="EURECO">
+              </div>
+
+              <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+              
+              <div class="admin-card-title" style="font-size: 1rem; margin-bottom: 16px;">External / Social Links</div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                  <label style="font-size: 0.8rem; color: var(--text-muted);">Link 1 Label</label>
+                  <input type="text" id="social1Name" class="admin-input" value="Envato">
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; color: var(--text-muted);">Link 1 URL</label>
+                  <input type="text" id="social1Url" class="admin-input" value="https://envato.com">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                  <label style="font-size: 0.8rem; color: var(--text-muted);">Link 2 Label</label>
+                  <input type="text" id="social2Name" class="admin-input" value="Dribbble">
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; color: var(--text-muted);">Link 2 URL</label>
+                  <input type="text" id="social2Url" class="admin-input" value="https://dribbble.com">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div>
+                  <label style="font-size: 0.8rem; color: var(--text-muted);">Link 3 Label</label>
+                  <input type="text" id="social3Name" class="admin-input" value="Behance">
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; color: var(--text-muted);">Link 3 URL</label>
+                  <input type="text" id="social3Url" class="admin-input" value="https://behance.net">
+                </div>
+              </div>
+
+              <button type="submit" class="admin-btn admin-btn-primary">Save Footer Changes</button>
+            </form>
+          </div>
         </section>
 
-        <!-- TAB 8: SITE SETTINGS & 404 TOGGLE -->
+        <!-- TAB 9: SITE SETTINGS & 404 TOGGLE -->
         <section class="admin-tab-content" id="tab-settings">
           <div class="admin-card" style="margin-bottom: 24px;">
             <div class="admin-card-title">General Site Configuration & Branding</div>
