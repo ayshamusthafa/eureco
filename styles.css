@@ -239,7 +239,7 @@ button {
 }
 
 .nav-logo img {
-  height: 36px;
+  height: 44px;
   width: auto;
   transition: filter 0.4s ease;
 }
@@ -1799,13 +1799,13 @@ body,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .preloader-logo-wrapper {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: clamp(120px, 16vw, 160px);
+  height: clamp(120px, 16vw, 160px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1819,10 +1819,10 @@ body,
 }
 
 .preloader-bar {
-  width: 160px;
-  height: 2px;
+  width: clamp(240px, 35vw, 340px);
+  height: 4px;
   background-color: var(--border-color);
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
 }
@@ -1836,18 +1836,19 @@ body,
 
 .preloader-percent {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-secondary);
+  letter-spacing: 0.5px;
 }
 
 @keyframes logoPulse {
   0%, 100% {
-    transform: scale(0.9);
-    filter: drop-shadow(0 0 10px rgba(61, 108, 174, 0.2));
+    transform: scale(0.92);
+    filter: drop-shadow(0 0 12px rgba(61, 108, 174, 0.25));
   }
   50% {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 25px rgba(61, 108, 174, 0.6));
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 30px rgba(61, 108, 174, 0.7));
   }
 }
