@@ -451,7 +451,7 @@ button {
 
 .hero-line--creative {
   font-size: clamp(4rem, 8vw, 7.5rem);
-  color: var(--accent);
+  color: var(--text-primary);
 }
 
 .hero-line--digital {
@@ -459,7 +459,7 @@ button {
   font-style: italic;
   font-weight: 400;
   font-size: clamp(3.5rem, 7vw, 6.5rem);
-  color: var(--accent);
+  color: var(--text-primary);
   padding-left: 5%;
 }
 
@@ -641,7 +641,7 @@ button {
   font-size: clamp(2rem, 3.5vw, 3rem);
   font-weight: 700;
   letter-spacing: -1px;
-  color: var(--accent);
+  color: var(--text-primary);
 }
 
 .stat-label {
@@ -654,7 +654,7 @@ button {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-primary);
   letter-spacing: -0.5px;
 }
 
@@ -685,7 +685,7 @@ button {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--section-label-color);
   letter-spacing: 0.5px;
 }
 
@@ -699,7 +699,7 @@ button {
 }
 
 .services-tagline strong {
-  color: var(--accent);
+  color: var(--text-primary);
   font-weight: 700;
 }
 
@@ -1068,14 +1068,13 @@ button {
   height: 36px;
   border-radius: 50%;
   background: var(--bg-tertiary);
-  border: 1px solid var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--text-muted);
   transition: all 0.3s ease;
 }
 
@@ -1133,7 +1132,6 @@ button {
   border-bottom: 2px solid var(--border-color);
   margin-bottom: 30px;
   letter-spacing: -0.5px;
-  color: var(--accent);
 }
 
 .contact-form {
@@ -1188,21 +1186,20 @@ button {
 
 .enter-btn {
   padding: 6px 16px;
-  background: var(--accent);
-  color: #FFFFFF;
+  background: var(--btn-fill-bg);
+  color: var(--btn-fill-text);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   border-radius: 4px;
-  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
 .enter-btn:hover {
-  background: var(--accent-hover);
+  background: var(--accent);
   color: #FFFFFF;
 }
 
@@ -1226,7 +1223,7 @@ button {
 
 .form-service-tag {
   padding: 8px 18px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1234,7 +1231,7 @@ button {
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: var(--accent);
+  color: var(--text-primary);
   background: transparent;
 }
 
@@ -1262,25 +1259,22 @@ button {
 
 .form-submit-btn {
   padding: 12px 28px;
-  border: 2px solid var(--accent);
-  background: var(--accent);
-  color: #FFFFFF;
+  border: 2px solid var(--text-primary);
+  background: transparent;
+  color: var(--text-primary);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .form-submit-btn:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #FFFFFF;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(61, 108, 174, 0.4);
 }
 
 /* Contact Right Side */
@@ -1295,9 +1289,8 @@ button {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(3rem, 7vw, 5.5rem);
   font-weight: 700;
-  letter-spacing: -2px;
+  letter-spacing: -3px;
   line-height: 1;
-  color: var(--accent);
 }
 
 .contact-3d-image {
@@ -1904,92 +1897,4 @@ body,
   font-size: 1rem;
   color: var(--text-muted);
   line-height: 1.6;
-}
-
-/* ============================================================
-   ANIMATED BACKGROUND VECTORS & MOVING SHAPES
-   ============================================================ */
-.bg-vector-container {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.bg-vector {
-  position: absolute;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.vector-circle-1 {
-  width: 450px;
-  height: 450px;
-  top: 8%;
-  right: -5%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(61, 108, 174, 0.28) 0%, rgba(61, 108, 174, 0.03) 70%, transparent 100%);
-  filter: blur(45px);
-  animation: floatGlow 10s ease-in-out infinite alternate;
-}
-
-.vector-ring-1 {
-  width: 260px;
-  height: 260px;
-  top: 38%;
-  left: 2%;
-  border: 2px dashed rgba(61, 108, 174, 0.4);
-  border-radius: 50%;
-  box-shadow: 0 0 35px rgba(61, 108, 174, 0.18);
-  animation: rotateShape 24s linear infinite;
-}
-
-.vector-square-1 {
-  width: 170px;
-  height: 170px;
-  top: 68%;
-  right: 6%;
-  border: 2px solid rgba(61, 108, 174, 0.35);
-  border-radius: 20px;
-  transform: rotate(45deg);
-  animation: floatSquare 16s ease-in-out infinite alternate;
-}
-
-.vector-wave-1 {
-  width: 520px;
-  height: 520px;
-  bottom: -10%;
-  left: -8%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(61, 108, 174, 0.22) 0%, transparent 70%);
-  filter: blur(55px);
-  animation: floatGlow 14s ease-in-out infinite alternate-reverse;
-}
-
-.vector-grid-1 {
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  width: 280px;
-  height: 280px;
-  background-image: radial-gradient(rgba(61, 108, 174, 0.35) 1.5px, transparent 1.5px);
-  background-size: 24px 24px;
-  opacity: 0.7;
-  transform: translate(-50%, -50%) rotate(15deg);
-}
-
-@keyframes floatGlow {
-  0% { transform: translateY(0) scale(1); }
-  100% { transform: translateY(-35px) scale(1.12); }
-}
-
-@keyframes rotateShape {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes floatSquare {
-  0% { transform: rotate(45deg) translateY(0); }
-  100% { transform: rotate(70deg) translateY(-40px); }
 }

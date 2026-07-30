@@ -78,10 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // NAVBAR SCROLL EFFECT
   // ============================================================
   const navbar = document.getElementById('navbar');
-  const vec1 = document.getElementById('vector1');
-  const vec2 = document.getElementById('vector2');
-  const vec3 = document.getElementById('vector3');
-  const vec4 = document.getElementById('vector4');
   let lastScrollY = 0;
 
   window.addEventListener('scroll', () => {
@@ -91,13 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       navbar.classList.remove('scrolled');
     }
-
-    // Dynamic scroll-driven vector shape movement
-    if (vec1) vec1.style.transform = `translateY(${scrollY * 0.15}px)`;
-    if (vec2) vec2.style.transform = `translateY(${-scrollY * 0.1}px) rotate(${scrollY * 0.04}deg)`;
-    if (vec3) vec3.style.transform = `translateY(${scrollY * 0.18}px) rotate(${45 + scrollY * 0.06}deg)`;
-    if (vec4) vec4.style.transform = `translateY(${-scrollY * 0.12}px)`;
-
     lastScrollY = scrollY;
   }, { passive: true });
 
