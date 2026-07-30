@@ -88,6 +88,8 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -96,6 +98,8 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
+  width: 100%;
+  position: relative;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
@@ -1128,6 +1132,7 @@ button {
 .form-field {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
@@ -1146,7 +1151,7 @@ button {
 .form-field label {
   font-size: 0.9rem;
   color: var(--text-muted);
-  white-space: nowrap;
+  white-space: normal;
   min-width: fit-content;
 }
 
@@ -1448,6 +1453,14 @@ button {
     font-size: 15px;
   }
 
+  /* Prevent side animations from expanding the viewport width */
+  .reveal-left, .reveal-right {
+    transform: translateY(20px);
+  }
+  .reveal-left.revealed, .reveal-right.revealed {
+    transform: translateY(0);
+  }
+
   .hero {
     padding-top: 90px;
     min-height: auto;
@@ -1461,6 +1474,8 @@ button {
 
   .hero-text h1 {
     letter-spacing: -2px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 
   .hero-3d-image {
@@ -1493,6 +1508,7 @@ button {
     padding: 0;
     border-bottom: 1px solid var(--stat-border);
     padding-bottom: 20px;
+    overflow: hidden;
   }
 
   .stat-item:nth-child(odd) {
@@ -1513,7 +1529,7 @@ button {
 
   .service-row-tags {
     grid-column: span 2;
-    padding-left: 66px;
+    padding-left: 0;
   }
 
   .services-visual {
@@ -1603,11 +1619,11 @@ button {
 
   .hero-line--creative,
   .hero-line--agency {
-    font-size: 3.2rem;
+    font-size: clamp(2.5rem, 10vw, 3.2rem);
   }
 
   .hero-line--digital {
-    font-size: 2.8rem;
+    font-size: clamp(2.2rem, 9vw, 2.8rem);
   }
 
   .stats-bar {
@@ -1639,8 +1655,13 @@ button {
   }
 
   .contact-headline {
-    font-size: 2.8rem;
+    font-size: clamp(2.2rem, 9vw, 2.8rem);
     letter-spacing: -1px;
+  }
+
+  .footer-email {
+    word-break: break-all;
+    overflow-wrap: anywhere;
   }
 
   .footer-brand-text {
