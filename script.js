@@ -209,11 +209,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const emailField = document.getElementById('emailField');
   const emailBtn = document.getElementById('emailBtn');
   const emailInput = document.getElementById('emailInput');
+  const phoneField = document.getElementById('phoneField');
+  const phoneBtn = document.getElementById('phoneBtn');
+  const phoneInput = document.getElementById('phoneInput');
   const servicesField = document.getElementById('servicesField');
   const submitRow = document.getElementById('submitRow');
   const submitBtn = document.getElementById('submitBtn');
 
   function enableField(field) {
+    if (!field) return;
     field.style.opacity = '1';
     field.style.pointerEvents = 'all';
     const input = field.querySelector('input');
@@ -252,12 +256,27 @@ document.addEventListener('DOMContentLoaded', () => {
         emailBtn.textContent = '✓';
         emailBtn.style.background = '#3D6CAE';
         emailBtn.style.color = '#FFFFFF';
-        enableField(servicesField);
-        enableField(submitRow);
+        enableField(phoneField);
       } else {
         emailInput.style.borderBottom = '2px solid #e74c3c';
         emailInput.focus();
         setTimeout(() => emailInput.style.borderBottom = '', 2000);
+      }
+    });
+  }
+
+  if (phoneBtn) {
+    phoneBtn.addEventListener('click', () => {
+      if (phoneInput.value.trim()) {
+        phoneBtn.textContent = '✓';
+        phoneBtn.style.background = '#3D6CAE';
+        phoneBtn.style.color = '#FFFFFF';
+        enableField(servicesField);
+        enableField(submitRow);
+      } else {
+        phoneInput.style.borderBottom = '2px solid #e74c3c';
+        phoneInput.focus();
+        setTimeout(() => phoneInput.style.borderBottom = '', 2000);
       }
     });
   }
@@ -271,6 +290,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (emailInput) {
     emailInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') emailBtn.click();
+    });
+  }
+  if (phoneInput) {
+    phoneInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') phoneBtn.click();
     });
   }
 
@@ -287,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.addEventListener('click', () => {
       const name = nameInput ? nameInput.value.trim() : '';
       const email = emailInput ? emailInput.value.trim() : '';
+      const phone = phoneInput ? phoneInput.value.trim() : '';
       const selectedServices = Array.from(document.querySelectorAll('.form-service-tag.active'))
         .map(tag => tag.textContent);
       
@@ -295,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.style.borderColor = '#e74c3c';
         submitBtn.style.color = '#e74c3c';
         setTimeout(() => {
-          submitBtn.textContent = 'GET STARTED';
+          submitBtn.textContent = 'SEND ENQUIRY';
           submitBtn.style.borderColor = '';
           submitBtn.style.color = '';
         }, 2000);
@@ -310,8 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
           date: new Date().toLocaleString(),
           name: name,
           email: email,
+          phone: phone || 'N/A',
           service: selectedServices.join(', '),
-          message: `Inquiry for ${selectedServices.join(', ')}`
+          message: `Phone: ${phone || 'N/A'} | Inquiry for ${selectedServices.join(', ')}`
         });
         localStorage.setItem('eureco_contact_submissions', JSON.stringify(submissions));
       } catch(e) {

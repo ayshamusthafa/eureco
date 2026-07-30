@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('submissionsTableBody');
     tbody.innerHTML = '';
     if (subs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No submissions found. Submit a message on contact form to view data here.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No submissions found. Submit a message on contact form to view data here.</td></tr>';
       return;
     }
     subs.forEach((s, idx) => {
@@ -562,6 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${s.date || 'N/A'}</td>
         <td><strong>${s.name}</strong></td>
         <td><a href="mailto:${s.email}" style="color: var(--accent);">${s.email}</a></td>
+        <td><a href="tel:${s.phone}" style="color: var(--text-primary); font-weight: 500;">${s.phone || 'N/A'}</a></td>
         <td>${s.service || 'General'}</td>
         <td>${s.message}</td>
         <td>
