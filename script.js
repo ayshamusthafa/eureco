@@ -5,6 +5,59 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   // ============================================================
+  // PRELOADER PROGRESS
+  // ============================================================
+  const preloader = document.getElementById('preloader');
+  const preloaderBarFill = document.getElementById('preloaderBarFill');
+  const preloaderPercent = document.getElementById('preloaderPercent');
+  
+  let currentProgress = 0;
+  
+  // Disable body scrolling during load
+  document.body.style.overflow = 'hidden';
+  
+  const progressInterval = setInterval(() => {
+    if (currentProgress < 90) {
+      const increment = Math.floor(Math.random() * 8) + 1;
+      currentProgress = Math.min(currentProgress + increment, 90);
+      updatePreloader(currentProgress);
+    }
+  }, 100);
+  
+  function updatePreloader(value) {
+    if (preloaderBarFill) preloaderBarFill.style.width = `${value}%`;
+    if (preloaderPercent) preloaderPercent.textContent = `${value}%`;
+  }
+  
+  window.addEventListener('load', () => {
+    clearInterval(progressInterval);
+    
+    const finalInterval = setInterval(() => {
+      if (currentProgress < 100) {
+        currentProgress += 5;
+        updatePreloader(Math.min(currentProgress, 100));
+      } else {
+        clearInterval(finalInterval);
+        setTimeout(hidePreloader, 400);
+      }
+    }, 30);
+  });
+  
+  // Safety fallback
+  setTimeout(() => {
+    clearInterval(progressInterval);
+    hidePreloader();
+  }, 3500);
+  
+  function hidePreloader() {
+    if (preloader && !preloader.classList.contains('fade-out')) {
+      preloader.classList.add('fade-out');
+      document.body.classList.add('loaded');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // ============================================================
   // THEME TOGGLE
   // ============================================================
   const themeToggle = document.getElementById('themeToggle');
