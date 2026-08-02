@@ -556,14 +556,14 @@ button {
   margin-bottom: 24px;
   padding: 14px 18px;
   border-radius: 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
+  background: #3D6CAE;
+  border: 1px solid rgba(61, 108, 174, 0.3);
   transition: all 0.3s ease;
 }
 
 .hero-service-item:hover {
-  background: var(--service-hover-bg);
-  border-color: var(--accent);
+  background: #345d99;
+  border-color: #4a7ec4;
   transform: translateX(-4px);
 }
 
@@ -571,8 +571,8 @@ button {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-tertiary);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -585,7 +585,7 @@ button {
 .hero-service-text {
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: #ffffff;
   line-height: 1.4;
 }
 
