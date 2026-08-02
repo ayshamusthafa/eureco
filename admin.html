@@ -636,6 +636,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
           <span>Awards</span>
         </a>
+        <a class="admin-nav-item" data-tab="team">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          <span>Team Members</span>
+        </a>
         <a class="admin-nav-item" data-tab="submissions">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           <span>Form Submissions</span>
@@ -694,6 +698,11 @@
               <div class="admin-card-title">Active Projects</div>
               <div class="stat-box-value" id="dashProjectsCount">3</div>
               <div class="stat-box-label">Projects in grid display</div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title">Team Members</div>
+              <div class="stat-box-value" id="dashTeamCount">8</div>
+              <div class="stat-box-label">Members in team carousel</div>
             </div>
             <div class="admin-card">
               <div class="admin-card-title">404 Custom Status</div>
@@ -778,6 +787,17 @@
                 </div>
                 <label class="switch">
                   <input type="checkbox" id="toggleAwards" checked data-container="awards">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Team Section</span>
+                  <span class="container-desc">3D animated carousel showcasing team members with vibrant gradient cards</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleTeam" checked data-container="team">
                   <span class="slider"></span>
                 </label>
               </div>
@@ -999,6 +1019,64 @@
                   </tr>
                 </thead>
                 <tbody id="awardsTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB: TEAM MEMBERS MANAGER -->
+        <section class="admin-tab-content" id="tab-team">
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">Add / Edit Team Member</div>
+            <form id="teamForm">
+              <input type="hidden" id="teamEditIndex" value="-1">
+              <div class="admin-form-group">
+                <label>Member Name</label>
+                <input type="text" id="teamName" class="admin-input" placeholder="John Doe" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Role / Position</label>
+                <input type="text" id="teamRole" class="admin-input" placeholder="CEO" required>
+              </div>
+              <div class="admin-form-group">
+                <label>Photo Image Path / URL (leave empty for initial placeholder)</label>
+                <input type="text" id="teamImage" class="admin-input" placeholder="assets/images/team/name.png">
+              </div>
+              <div class="admin-form-group">
+                <label>Card Gradient Color</label>
+                <select id="teamGradient" class="admin-select">
+                  <option value="linear-gradient(135deg, #FF2E93, #FF0040)">🔴 Pink → Red</option>
+                  <option value="linear-gradient(135deg, #FF6B35, #FF2E93)">🟠 Orange → Pink</option>
+                  <option value="linear-gradient(135deg, #9B30FF, #4A00E0)">🟣 Purple → Blue</option>
+                  <option value="linear-gradient(135deg, #4A00E0, #7B2FBE)">🔵 Blue → Purple</option>
+                  <option value="linear-gradient(135deg, #FF8C00, #FFD700)">🟡 Orange → Yellow</option>
+                  <option value="linear-gradient(135deg, #00D2FF, #3D6CAE)">🔵 Cyan → Blue</option>
+                  <option value="linear-gradient(135deg, #FF0040, #FF6B35)">🔴 Red → Orange</option>
+                  <option value="linear-gradient(135deg, #FF00FF, #FF2E93)">💜 Magenta → Pink</option>
+                </select>
+              </div>
+              <div style="display: flex; gap: 12px;">
+                <button type="submit" class="admin-btn admin-btn-primary" id="saveTeamBtn">Add Member</button>
+                <button type="button" class="admin-btn" id="cancelTeamBtn" style="display:none;" onclick="resetTeamForm()">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-title">Team Members List</div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Avatar</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Gradient</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="teamTableBody">
                 </tbody>
               </table>
             </div>

@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
       services: false,
       projects: false,
       awards: false,
+      team: false,
       contact: false,
       footer: false
     },
@@ -48,6 +49,16 @@ document.addEventListener('DOMContentLoaded', () => {
       { num: '01', name: 'Webby Awards', project: 'Eureco', year: '2025' },
       { num: '02', name: 'Awwwards Site of the Day', project: 'NovaBrand', year: '2024' },
       { num: '03', name: 'FWA of the Day', project: 'Artisan Studio', year: '2024' }
+    ],
+    team: [
+      { name: 'Nisam VM', role: 'CEO', image: '', gradient: 'linear-gradient(135deg, #FF2E93, #FF0040)' },
+      { name: 'Shirin', role: 'SMM Head', image: '', gradient: 'linear-gradient(135deg, #FF6B35, #FF2E93)' },
+      { name: 'Fidha Sabrina', role: 'HR', image: '', gradient: 'linear-gradient(135deg, #FF00FF, #FF2E93)' },
+      { name: 'Youthika', role: 'Performance', image: '', gradient: 'linear-gradient(135deg, #FF0040, #FF6B35)' },
+      { name: 'Thasleem', role: 'Co-Founder', image: '', gradient: 'linear-gradient(135deg, #4A00E0, #7B2FBE)' },
+      { name: 'Amal', role: 'Creative Head', image: '', gradient: 'linear-gradient(135deg, #9B30FF, #4A00E0)' },
+      { name: 'Rashid', role: 'Developer', image: '', gradient: 'linear-gradient(135deg, #00D2FF, #3D6CAE)' },
+      { name: 'Fathima', role: 'Content Lead', image: '', gradient: 'linear-gradient(135deg, #FF8C00, #FFD700)' }
     ],
     footer: {
       email: 'eureco@mail.com',
@@ -178,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     services: 'Services Container Manager',
     projects: 'Projects Grid Manager',
     awards: 'Awards Recognition Manager',
+    team: 'Team Members Manager',
     submissions: 'Contact Form Submissions',
     footer: 'Footer Content Manager',
     settings: 'Site Branding & 404 Configuration'
@@ -224,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dashSubmissionsCount').textContent = subs.length;
     document.getElementById('dashServicesCount').textContent = siteData.services.length;
     document.getElementById('dashProjectsCount').textContent = siteData.projects.length;
+    document.getElementById('dashTeamCount').textContent = (siteData.team || []).length;
     document.getElementById('dash404Status').textContent = siteData.config404.enabled ? 'ON' : 'OFF';
 
     // Render Container Switches
@@ -231,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggleServices').checked = !siteData.hiddenContainers.services;
     document.getElementById('toggleProjects').checked = !siteData.hiddenContainers.projects;
     document.getElementById('toggleAwards').checked = !siteData.hiddenContainers.awards;
+    document.getElementById('toggleTeam').checked = !siteData.hiddenContainers.team;
     document.getElementById('toggleContact').checked = !siteData.hiddenContainers.contact;
     document.getElementById('toggleFooter').checked = !siteData.hiddenContainers.footer;
 
@@ -280,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderServicesTable(siteData.services);
     renderProjectsTable(siteData.projects);
     renderAwardsTable(siteData.awards);
+    renderTeamTable(siteData.team || []);
   }
 
   initAdminDashboard();
@@ -524,6 +539,89 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('awardEditIndex').value = -1;
     document.getElementById('saveAwardBtn').textContent = 'Add Award';
     document.getElementById('cancelAwardBtn').style.display = 'none';
+  };
+
+  // ============================================================
+  // TEAM MEMBERS CRUD
+  // ============================================================
+  function renderTeamTable(team) {
+    const tbody = document.getElementById('teamTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    team.forEach((m, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div style="width:40px;height:40px;border-radius:8px;background:${m.gradient};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;">
+            ${m.image ? `<img src="${m.image}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : m.name.charAt(0)}
+          </div>
+        </td>
+        <td><strong>${m.name}</strong></td>
+        <td>${m.role}</td>
+        <td><span style="display:inline-block;width:60px;height:20px;border-radius:4px;background:${m.gradient};"></span></td>
+        <td>
+          <button class="admin-btn" onclick="editTeamMember(${idx})">Edit</button>
+          <button class="admin-btn admin-btn-danger" onclick="deleteTeamMember(${idx})">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const teamForm = document.getElementById('teamForm');
+  if (teamForm) {
+    teamForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const idx = parseInt(document.getElementById('teamEditIndex').value);
+      const name = document.getElementById('teamName').value.trim();
+      const role = document.getElementById('teamRole').value.trim();
+      const image = document.getElementById('teamImage').value.trim();
+      const gradient = document.getElementById('teamGradient').value;
+
+      const siteData = getSiteData();
+      if (!siteData.team) siteData.team = [];
+      if (idx >= 0) {
+        siteData.team[idx] = { name, role, image, gradient };
+      } else {
+        siteData.team.push({ name, role, image, gradient });
+      }
+      saveSiteData(siteData);
+      resetTeamForm();
+      initAdminDashboard();
+    });
+  }
+
+  window.editTeamMember = function(idx) {
+    const siteData = getSiteData();
+    const m = (siteData.team || [])[idx];
+    if (!m) return;
+    document.getElementById('teamEditIndex').value = idx;
+    document.getElementById('teamName').value = m.name;
+    document.getElementById('teamRole').value = m.role;
+    document.getElementById('teamImage').value = m.image || '';
+    document.getElementById('teamGradient').value = m.gradient;
+    document.getElementById('saveTeamBtn').textContent = 'Update Member';
+    document.getElementById('cancelTeamBtn').style.display = 'inline-block';
+    switchTab('team');
+  };
+
+  window.deleteTeamMember = function(idx) {
+    if (!confirm('Are you sure you want to remove this team member?')) return;
+    const siteData = getSiteData();
+    if (!siteData.team) return;
+    siteData.team.splice(idx, 1);
+    saveSiteData(siteData);
+    initAdminDashboard();
+  };
+
+  window.resetTeamForm = function() {
+    const form = document.getElementById('teamForm');
+    if (form) form.reset();
+    document.getElementById('teamEditIndex').value = -1;
+    const saveBtn = document.getElementById('saveTeamBtn');
+    if (saveBtn) saveBtn.textContent = 'Add Member';
+    const cancelBtn = document.getElementById('cancelTeamBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
   };
 
   // ============================================================

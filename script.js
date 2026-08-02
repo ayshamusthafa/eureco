@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
           services: document.getElementById('services'),
           projects: document.getElementById('projects'),
           awards: document.getElementById('awards'),
+          team: document.getElementById('team'),
           contact: document.getElementById('contact'),
           footer: document.querySelector('.footer')
         };
@@ -419,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
           services: ['a[href="#services"]'],
           projects: ['a[href="#projects"]'],
           awards: ['a[href="#awards"]'],
+          team: ['a[href="#team"]'],
           contact: ['a[href="#contact"]']
         };
 
@@ -575,6 +577,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Team Carousel
+      if (data.team && Array.isArray(data.team) && data.team.length > 0) {
+        renderTeamCarousel(data.team);
+        const countEl = document.getElementById('teamMemberCount');
+        if (countEl) countEl.textContent = data.team.length + ' MEMBERS';
+      }
+
       // 404 / Maintenance Mode Fullscreen Overlay
       let overlay404 = document.getElementById('maintenanceOverlay404');
       if (data.config404 && data.config404.enabled) {
@@ -694,5 +703,239 @@ document.addEventListener('DOMContentLoaded', () => {
       glow.style.top = e.clientY + 'px';
     });
   }
+
+  // ============================================================
+  // TEAM 3D CAROUSEL ENGINE
+  // ============================================================
+  let teamCarouselAngle = 0;
+  let teamCarouselRadius = 350;
+  let teamIsDragging = false;
+  let teamDragStartX = 0;
+  let teamDragAngle = 0;
+  let teamVelocity = 0;
+  let teamAnimFrame = null;
+  let teamIsAutoSpinning = true;
+
+  function renderTeamCarousel(team) {
+    const carousel = document.getElementById('teamCarousel');
+    const scene = document.getElementById('teamCarouselScene');
+    if (!carousel || !scene) return;
+
+    // Clear existing cards
+    carousel.innerHTML = '';
+    carousel.classList.remove('auto-spin');
+
+    // Calculate responsive radius
+    const isMobile = window.innerWidth <= 768;
+    const isSmallMobile = window.innerWidth <= 480;
+    teamCarouselRadius = isSmallMobile ? 200 : isMobile ? 260 : 350;
+
+    const count = team.length;
+    const angleStep = 360 / count;
+
+    team.forEach((member, i) => {
+      const card = document.createElement('div');
+      card.className = 'team-card';
+      card.style.background = member.gradient;
+      card.style.transform = `rotateY(${angleStep * i}deg) translateZ(${teamCarouselRadius}px)`;
+
+      let photoHTML = '';
+      if (member.image) {
+        photoHTML = `
+          <img class="team-card-photo" src="${member.image}" alt="${member.name}">
+          <div class="team-card-overlay" style="background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);"></div>
+        `;
+      } else {
+        photoHTML = `
+          <div class="team-card-placeholder">
+            <span class="team-card-placeholder-initial">${member.name.charAt(0)}</span>
+          </div>
+          <div class="team-card-overlay" style="background: linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%);"></div>
+        `;
+      }
+
+      card.innerHTML = `
+        ${photoHTML}
+        <div class="team-card-info">
+          <div class="team-card-role">${member.role}</div>
+          <div class="team-card-name">${member.name}</div>
+        </div>
+      `;
+
+      carousel.appendChild(card);
+    });
+
+    // Set initial rotation
+    carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
+
+    // Start auto-spin
+    teamIsAutoSpinning = true;
+    startTeamAutoSpin();
+
+    // Attach interaction handlers
+    attachTeamDragHandlers(scene, carousel);
+    attachTeamScrollHandler(scene);
+  }
+
+  function startTeamAutoSpin() {
+    if (teamAnimFrame) cancelAnimationFrame(teamAnimFrame);
+
+    function spin() {
+      if (!teamIsAutoSpinning) return;
+      teamCarouselAngle += 0.15;
+      const carousel = document.getElementById('teamCarousel');
+      if (carousel) {
+        carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
+      }
+      teamAnimFrame = requestAnimationFrame(spin);
+    }
+    teamAnimFrame = requestAnimationFrame(spin);
+  }
+
+  function stopTeamAutoSpin() {
+    teamIsAutoSpinning = false;
+    if (teamAnimFrame) {
+      cancelAnimationFrame(teamAnimFrame);
+      teamAnimFrame = null;
+    }
+  }
+
+  function startMomentumDecay() {
+    if (teamAnimFrame) cancelAnimationFrame(teamAnimFrame);
+
+    function decay() {
+      if (Math.abs(teamVelocity) < 0.01) {
+        teamVelocity = 0;
+        // Resume auto spin after momentum ends
+        setTimeout(() => {
+          teamIsAutoSpinning = true;
+          startTeamAutoSpin();
+        }, 2000);
+        return;
+      }
+
+      teamVelocity *= 0.96; // Friction
+      teamCarouselAngle += teamVelocity;
+      const carousel = document.getElementById('teamCarousel');
+      if (carousel) {
+        carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
+      }
+      teamAnimFrame = requestAnimationFrame(decay);
+    }
+    teamAnimFrame = requestAnimationFrame(decay);
+  }
+
+  function attachTeamDragHandlers(scene, carousel) {
+    // Mouse events
+    scene.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      teamIsDragging = true;
+      teamDragStartX = e.clientX;
+      teamDragAngle = teamCarouselAngle;
+      teamVelocity = 0;
+      stopTeamAutoSpin();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!teamIsDragging) return;
+      const deltaX = e.clientX - teamDragStartX;
+      teamVelocity = deltaX * 0.05 - (teamCarouselAngle - teamDragAngle - deltaX * 0.3) * 0.01;
+      teamCarouselAngle = teamDragAngle + deltaX * 0.3;
+      carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (teamIsDragging) {
+        teamIsDragging = false;
+        startMomentumDecay();
+      }
+    });
+
+    // Touch events
+    scene.addEventListener('touchstart', (e) => {
+      teamIsDragging = true;
+      teamDragStartX = e.touches[0].clientX;
+      teamDragAngle = teamCarouselAngle;
+      teamVelocity = 0;
+      stopTeamAutoSpin();
+    }, { passive: true });
+
+    scene.addEventListener('touchmove', (e) => {
+      if (!teamIsDragging) return;
+      const deltaX = e.touches[0].clientX - teamDragStartX;
+      teamVelocity = deltaX * 0.05 - (teamCarouselAngle - teamDragAngle - deltaX * 0.3) * 0.01;
+      teamCarouselAngle = teamDragAngle + deltaX * 0.3;
+      carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
+    }, { passive: true });
+
+    scene.addEventListener('touchend', () => {
+      if (teamIsDragging) {
+        teamIsDragging = false;
+        startMomentumDecay();
+      }
+    });
+  }
+
+  function attachTeamScrollHandler(scene) {
+    scene.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      stopTeamAutoSpin();
+      teamVelocity += e.deltaY * 0.08;
+      teamCarouselAngle += e.deltaY * 0.15;
+      const carousel = document.getElementById('teamCarousel');
+      if (carousel) {
+        carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
+      }
+      startMomentumDecay();
+    }, { passive: false });
+  }
+
+  // Initial render on page load
+  (function initTeamCarousel() {
+    const raw = localStorage.getItem('eureco_site_data');
+    let data;
+    if (raw) {
+      try { data = JSON.parse(raw); } catch(e) { data = null; }
+    }
+
+    // Seed default team if not present
+    if (!data || !data.team || data.team.length === 0) {
+      const defaultTeam = [
+        { name: 'Nisam VM', role: 'CEO', image: '', gradient: 'linear-gradient(135deg, #FF2E93, #FF0040)' },
+        { name: 'Shirin', role: 'SMM Head', image: '', gradient: 'linear-gradient(135deg, #FF6B35, #FF2E93)' },
+        { name: 'Fidha Sabrina', role: 'HR', image: '', gradient: 'linear-gradient(135deg, #FF00FF, #FF2E93)' },
+        { name: 'Youthika', role: 'Performance', image: '', gradient: 'linear-gradient(135deg, #FF0040, #FF6B35)' },
+        { name: 'Thasleem', role: 'Co-Founder', image: '', gradient: 'linear-gradient(135deg, #4A00E0, #7B2FBE)' },
+        { name: 'Amal', role: 'Creative Head', image: '', gradient: 'linear-gradient(135deg, #9B30FF, #4A00E0)' },
+        { name: 'Rashid', role: 'Developer', image: '', gradient: 'linear-gradient(135deg, #00D2FF, #3D6CAE)' },
+        { name: 'Fathima', role: 'Content Lead', image: '', gradient: 'linear-gradient(135deg, #FF8C00, #FFD700)' }
+      ];
+      if (data) {
+        data.team = defaultTeam;
+        localStorage.setItem('eureco_site_data', JSON.stringify(data));
+      } else {
+        data = { team: defaultTeam };
+      }
+    }
+
+    if (data && data.team && data.team.length > 0) {
+      renderTeamCarousel(data.team);
+      const countEl = document.getElementById('teamMemberCount');
+      if (countEl) countEl.textContent = data.team.length + ' MEMBERS';
+    }
+  })();
+
+  // Handle window resize for responsive radius
+  window.addEventListener('resize', () => {
+    const raw = localStorage.getItem('eureco_site_data');
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (data.team && data.team.length > 0) {
+          renderTeamCarousel(data.team);
+        }
+      } catch(e) {}
+    }
+  });
 
 });
