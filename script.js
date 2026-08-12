@@ -16,6 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Disable body scrolling during load
   document.body.style.overflow = 'hidden';
   
+  // Fetch live site payload from Baserow Proxy on page start
+  fetch('/api/site-data')
+    .then(r => r.json())
+    .then(res => {
+      if (res.success && res.siteData) {
+        localStorage.setItem('eureco_site_data', JSON.stringify(res.siteData));
+        applyDynamicSiteData();
+        if (res.siteData.reelsSection) renderReelsSection(res.siteData.reelsSection);
+        if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
+      }
+    })
+    .catch(err => console.warn('Could not fetch remote site-data from Baserow proxy:', err));
+
   const progressInterval = setInterval(() => {
     if (currentProgress < 90) {
       const increment = Math.floor(Math.random() * 8) + 1;

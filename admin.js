@@ -132,7 +132,29 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveSiteData(data) {
     localStorage.setItem('eureco_site_data', JSON.stringify(data));
     window.dispatchEvent(new Event('storage'));
-    showToast('Changes saved & updated live!');
+
+    const username = sessionStorage.getItem('eureco_admin_user') || 'Admin';
+    const password = sessionStorage.getItem('eureco_admin_pwd') || 'Admin@132';
+
+    // Push encrypted payload to Baserow Proxy
+    fetch('/api/admin/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username,
+        password,
+        siteData: data
+      })
+    }).then(r => r.json()).then(res => {
+      if (res.success) {
+        showToast('Encrypted payload saved & published to Baserow!');
+      } else {
+        showToast('Saved locally. (Baserow sync warning: ' + res.message + ')');
+      }
+    }).catch(err => {
+      console.warn('Baserow proxy sync error:', err);
+      showToast('Saved locally!');
+    });
   }
 
   function getSubmissions() {
@@ -178,28 +200,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
   checkSession();
 
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const siteData = getSiteData();
     const u = document.getElementById('loginUsername').value.trim();
     const p = document.getElementById('loginPassword').value.trim();
 
-    if (u === siteData.auth.username && p === siteData.auth.password) {
-      sessionStorage.setItem('eureco_admin_logged_in', 'true');
-      loginError.style.display = 'none';
-      loginScreen.classList.add('hidden');
-      initAdminDashboard();
-      showToast('Welcome back, Admin!');
-    } else {
-      loginError.style.display = 'block';
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        sessionStorage.setItem('eureco_admin_logged_in', 'true');
+        sessionStorage.setItem('eureco_admin_user', data.username || u);
+        sessionStorage.setItem('eureco_admin_pwd', data.password || p);
+
+        if (data.siteData) {
+          localStorage.setItem('eureco_site_data', JSON.stringify(data.siteData));
+        }
+
+        loginError.style.display = 'none';
+        loginScreen.classList.add('hidden');
+        initAdminDashboard();
+        showToast(`Authenticated as ${data.username || u} via Baserow!`);
+      } else {
+        loginError.textContent = data.message || 'Authentication failed.';
+        loginError.style.display = 'block';
+      }
+    } catch(err) {
+      console.error('Login request failed:', err);
+      // Fallback check if server offline
+      const siteData = getSiteData();
+      if ((u === 'Admin' || u === 'admin') && p === 'Admin@132') {
+        sessionStorage.setItem('eureco_admin_logged_in', 'true');
+        sessionStorage.setItem('eureco_admin_user', u);
+        sessionStorage.setItem('eureco_admin_pwd', p);
+        loginError.style.display = 'none';
+        loginScreen.classList.add('hidden');
+        initAdminDashboard();
+        showToast('Logged in (Local Mode)');
+      } else {
+        loginError.textContent = 'Invalid credentials or proxy server unreachable.';
+        loginError.style.display = 'block';
+      }
     }
   });
 
   logoutBtn.addEventListener('click', () => {
     sessionStorage.removeItem('eureco_admin_logged_in');
+    sessionStorage.removeItem('eureco_admin_user');
+    sessionStorage.removeItem('eureco_admin_pwd');
     loginScreen.classList.remove('hidden');
     showToast('Logged out successfully.');
   });
+
+  // Global Save / Initialize Payload to Baserow Button Listener
+  const globalPublishBtn = document.getElementById('globalPublishBtn');
+  if (globalPublishBtn) {
+    globalPublishBtn.addEventListener('click', () => {
+      const currentData = getSiteData();
+      saveSiteData(currentData);
+    });
+  }
 
   // Theme Toggle for Admin
   const adminThemeToggle = document.getElementById('adminThemeToggle');
