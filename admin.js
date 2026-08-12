@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
       services: false,
       projects: false,
       awards: false,
+      reels: false,
       team: false,
       contact: false,
       footer: false
@@ -73,6 +74,44 @@ document.addEventListener('DOMContentLoaded', () => {
     config404: {
       enabled: false,
       customMessage: 'Page Not Found — Eureco Digital Agency'
+    },
+    reelsSection: {
+      tagline: 'WHOM WE BRANDED',
+      titlePrefix: 'HEAR FROM',
+      titleHighlight: 'OUR',
+      titleSuffix: 'CLIENTS',
+      profileUrl: 'https://instagram.com/desgro.media',
+      buttonText: 'VIEW MORE ON INSTAGRAM',
+      cards: [
+        {
+          handle: '@DESGRO.MEDIA',
+          videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-man-giving-a-speech-in-a-conference-room-41569-large.mp4',
+          posterUrl: '',
+          reelUrl: 'https://www.instagram.com/reel/C123456789/',
+          quote: 'Desgro brought me to that exact place I envisioned.'
+        },
+        {
+          handle: '@DESGRO.MEDIA',
+          videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-on-video-call-with-a-laptop-42861-large.mp4',
+          posterUrl: '',
+          reelUrl: 'https://www.instagram.com/reel/C987654321/',
+          quote: 'I have many friends in the industry who recommended them.'
+        },
+        {
+          handle: '@EURECO.MEDIA',
+          videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-creative-team-working-on-a-project-in-an-office-42866-large.mp4',
+          posterUrl: '',
+          reelUrl: 'https://www.instagram.com/reel/C555555555/',
+          quote: 'Our brand identity completely transformed our audience reach.'
+        },
+        {
+          handle: '@DESGRO.MEDIA',
+          videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-working-on-a-laptop-in-an-office-41566-large.mp4',
+          posterUrl: '',
+          reelUrl: 'https://www.instagram.com/reel/C777777777/',
+          quote: 'Exceptional video quality and marketing execution.'
+        }
+      ]
     }
   };
 
@@ -189,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     services: 'Services Container Manager',
     projects: 'Projects Grid Manager',
     awards: 'Awards Recognition Manager',
+    reels: 'Instagram Reels Container Manager',
     team: 'Team Members Manager',
     submissions: 'Contact Form Submissions',
     footer: 'Footer Content Manager',
@@ -244,9 +284,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggleServices').checked = !siteData.hiddenContainers.services;
     document.getElementById('toggleProjects').checked = !siteData.hiddenContainers.projects;
     document.getElementById('toggleAwards').checked = !siteData.hiddenContainers.awards;
+    const toggleReelsEl = document.getElementById('toggleReels');
+    if (toggleReelsEl) toggleReelsEl.checked = !siteData.hiddenContainers.reels;
     document.getElementById('toggleTeam').checked = !siteData.hiddenContainers.team;
     document.getElementById('toggleContact').checked = !siteData.hiddenContainers.contact;
     document.getElementById('toggleFooter').checked = !siteData.hiddenContainers.footer;
+
+    // Render Reels Section Inputs
+    if (siteData.reelsSection) {
+      const rs = siteData.reelsSection;
+      if (document.getElementById('reelsTaglineInput')) document.getElementById('reelsTaglineInput').value = rs.tagline || 'WHOM WE BRANDED';
+      if (document.getElementById('reelsTitlePrefixInput')) document.getElementById('reelsTitlePrefixInput').value = rs.titlePrefix || 'HEAR FROM';
+      if (document.getElementById('reelsTitleHighlightInput')) document.getElementById('reelsTitleHighlightInput').value = rs.titleHighlight || 'OUR';
+      if (document.getElementById('reelsTitleSuffixInput')) document.getElementById('reelsTitleSuffixInput').value = rs.titleSuffix || 'CLIENTS';
+      if (document.getElementById('reelsProfileUrlInput')) document.getElementById('reelsProfileUrlInput').value = rs.profileUrl || 'https://instagram.com/desgro.media';
+      if (document.getElementById('reelsButtonTextInput')) document.getElementById('reelsButtonTextInput').value = rs.buttonText || 'VIEW MORE ON INSTAGRAM';
+    }
 
     // Render Hero & Stats Inputs
     document.getElementById('heroLine1').value = siteData.hero.line1;
@@ -295,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProjectsTable(siteData.projects);
     renderAwardsTable(siteData.awards);
     renderTeamTable(siteData.team || []);
+    renderReelsTable(siteData.reelsSection ? siteData.reelsSection.cards : []);
   }
 
   initAdminDashboard();
@@ -743,5 +797,118 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('newPassword').value = '';
     showToast('Admin password updated successfully');
   });
+
+  // ============================================================
+  // INSTAGRAM REELS MANAGER LOGIC
+  // ============================================================
+  const reelsHeaderForm = document.getElementById('reelsHeaderForm');
+  if (reelsHeaderForm) {
+    reelsHeaderForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const siteData = getSiteData();
+      if (!siteData.reelsSection) siteData.reelsSection = {};
+
+      siteData.reelsSection.tagline = document.getElementById('reelsTaglineInput').value.trim();
+      siteData.reelsSection.titlePrefix = document.getElementById('reelsTitlePrefixInput').value.trim();
+      siteData.reelsSection.titleHighlight = document.getElementById('reelsTitleHighlightInput').value.trim();
+      siteData.reelsSection.titleSuffix = document.getElementById('reelsTitleSuffixInput').value.trim();
+      siteData.reelsSection.profileUrl = document.getElementById('reelsProfileUrlInput').value.trim();
+      siteData.reelsSection.buttonText = document.getElementById('reelsButtonTextInput').value.trim();
+
+      saveSiteData(siteData);
+    });
+  }
+
+  function renderReelsTable(cards) {
+    const tbody = document.getElementById('reelsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!cards || cards.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No Reel cards added yet. Add one above!</td></tr>';
+      return;
+    }
+
+    cards.forEach((c, idx) => {
+      const tr = document.createElement('tr');
+      const mediaPreview = c.videoUrl
+        ? `<video src="${c.videoUrl}" style="width:50px; height:70px; object-fit:cover; border-radius:6px;" muted loop playsinline></video>`
+        : (c.posterUrl ? `<img src="${c.posterUrl}" style="width:50px; height:70px; object-fit:cover; border-radius:6px;">` : `<span style="font-size:0.75rem; color:var(--text-muted);">No media</span>`);
+
+      tr.innerHTML = `
+        <td><strong>${c.handle}</strong></td>
+        <td>${mediaPreview}</td>
+        <td><a href="${c.reelUrl}" target="_blank" style="color: var(--accent); font-size: 0.8rem;">${c.reelUrl} ↗</a></td>
+        <td><span style="font-size:0.8rem; color: var(--text-muted);">${c.quote || 'N/A'}</span></td>
+        <td>
+          <button class="admin-btn" onclick="editReelCard(${idx})">Edit</button>
+          <button class="admin-btn admin-btn-danger" onclick="deleteReelCard(${idx})">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const reelCardForm = document.getElementById('reelCardForm');
+  if (reelCardForm) {
+    reelCardForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const idx = parseInt(document.getElementById('reelEditIndex').value);
+      const handle = document.getElementById('reelHandleInput').value.trim();
+      const reelUrl = document.getElementById('reelUrlInput').value.trim();
+      const videoUrl = document.getElementById('reelVideoUrlInput').value.trim();
+      const posterUrl = document.getElementById('reelPosterUrlInput').value.trim();
+      const quote = document.getElementById('reelQuoteInput').value.trim();
+
+      const siteData = getSiteData();
+      if (!siteData.reelsSection) siteData.reelsSection = { cards: [] };
+      if (!Array.isArray(siteData.reelsSection.cards)) siteData.reelsSection.cards = [];
+
+      const newCard = { handle, reelUrl, videoUrl, posterUrl, quote };
+
+      if (idx >= 0 && idx < siteData.reelsSection.cards.length) {
+        siteData.reelsSection.cards[idx] = newCard;
+      } else {
+        siteData.reelsSection.cards.push(newCard);
+      }
+
+      saveSiteData(siteData);
+      resetReelForm();
+      initAdminDashboard();
+    });
+  }
+
+  window.editReelCard = function(idx) {
+    const siteData = getSiteData();
+    if (!siteData.reelsSection || !siteData.reelsSection.cards[idx]) return;
+    const c = siteData.reelsSection.cards[idx];
+
+    document.getElementById('reelEditIndex').value = idx;
+    document.getElementById('reelHandleInput').value = c.handle || '';
+    document.getElementById('reelUrlInput').value = c.reelUrl || '';
+    document.getElementById('reelVideoUrlInput').value = c.videoUrl || '';
+    document.getElementById('reelPosterUrlInput').value = c.posterUrl || '';
+    document.getElementById('reelQuoteInput').value = c.quote || '';
+
+    document.getElementById('saveReelBtn').textContent = 'Update Reel Card';
+    document.getElementById('cancelReelBtn').style.display = 'inline-block';
+    switchTab('reels');
+  };
+
+  window.deleteReelCard = function(idx) {
+    if (!confirm('Are you sure you want to delete this Reel card?')) return;
+    const siteData = getSiteData();
+    if (siteData.reelsSection && Array.isArray(siteData.reelsSection.cards)) {
+      siteData.reelsSection.cards.splice(idx, 1);
+      saveSiteData(siteData);
+      initAdminDashboard();
+    }
+  };
+
+  window.resetReelForm = function() {
+    if (document.getElementById('reelCardForm')) document.getElementById('reelCardForm').reset();
+    document.getElementById('reelEditIndex').value = -1;
+    document.getElementById('saveReelBtn').textContent = 'Add Reel Card';
+    document.getElementById('cancelReelBtn').style.display = 'none';
+  };
 
 });

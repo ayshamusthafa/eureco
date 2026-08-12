@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
           services: document.getElementById('services'),
           projects: document.getElementById('projects'),
           awards: document.getElementById('awards'),
+          reels: document.getElementById('reels'),
           team: document.getElementById('team'),
           contact: document.getElementById('contact'),
           footer: document.querySelector('.footer')
@@ -420,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
           services: ['a[href="#services"]'],
           projects: ['a[href="#projects"]'],
           awards: ['a[href="#awards"]'],
+          reels: ['a[href="#reels"]'],
           team: ['a[href="#team"]'],
           contact: ['a[href="#contact"]']
         };
@@ -925,17 +927,147 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })();
 
-  // Handle window resize for responsive radius
-  window.addEventListener('resize', () => {
+  // ============================================================
+  // INSTAGRAM REELS SECTION RENDERER
+  // ============================================================
+  const defaultReelsData = {
+    tagline: 'WHOM WE BRANDED',
+    titlePrefix: 'HEAR FROM',
+    titleHighlight: 'OUR',
+    titleSuffix: 'CLIENTS',
+    profileUrl: 'https://instagram.com/desgro.media',
+    buttonText: 'VIEW MORE ON INSTAGRAM',
+    cards: [
+      {
+        handle: '@DESGRO.MEDIA',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-man-giving-a-speech-in-a-conference-room-41569-large.mp4',
+        posterUrl: '',
+        reelUrl: 'https://www.instagram.com/reel/C123456789/',
+        quote: 'Desgro brought me to that exact place I envisioned.'
+      },
+      {
+        handle: '@DESGRO.MEDIA',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-young-woman-talking-on-video-call-with-a-laptop-42861-large.mp4',
+        posterUrl: '',
+        reelUrl: 'https://www.instagram.com/reel/C987654321/',
+        quote: 'I have many friends in the industry who recommended them.'
+      },
+      {
+        handle: '@EURECO.MEDIA',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-creative-team-working-on-a-project-in-an-office-42866-large.mp4',
+        posterUrl: '',
+        reelUrl: 'https://www.instagram.com/reel/C555555555/',
+        quote: 'Our brand identity completely transformed our audience reach.'
+      },
+      {
+        handle: '@DESGRO.MEDIA',
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-woman-working-on-a-laptop-in-an-office-41566-large.mp4',
+        posterUrl: '',
+        reelUrl: 'https://www.instagram.com/reel/C777777777/',
+        quote: 'Exceptional video quality and marketing execution.'
+      }
+    ]
+  };
+
+  function renderReelsSection(reelsConfig) {
+    const track = document.getElementById('reelsTrack');
+    const taglineText = document.getElementById('reelsTaglineText');
+    const titlePrefix = document.getElementById('reelsTitlePrefix');
+    const titleHighlight = document.getElementById('reelsTitleHighlight');
+    const titleSuffix = document.getElementById('reelsTitleSuffix');
+    const profileBtn = document.getElementById('reelsProfileBtn');
+    const btnText = document.getElementById('reelsBtnText');
+
+    if (!track) return;
+
+    const data = { ...defaultReelsData, ...reelsConfig };
+
+    if (taglineText) taglineText.textContent = data.tagline || 'WHOM WE BRANDED';
+    if (titlePrefix) titlePrefix.textContent = data.titlePrefix || 'HEAR FROM';
+    if (titleHighlight) titleHighlight.textContent = data.titleHighlight || 'OUR';
+    if (titleSuffix) titleSuffix.textContent = data.titleSuffix || 'CLIENTS';
+
+    if (profileBtn) {
+      profileBtn.href = data.profileUrl || 'https://instagram.com/desgro.media';
+    }
+    if (btnText) {
+      btnText.textContent = data.buttonText || 'VIEW MORE ON INSTAGRAM';
+    }
+
+    const cardsList = Array.isArray(data.cards) && data.cards.length > 0 ? data.cards : defaultReelsData.cards;
+
+    // Double cards array for seamless infinite marquee loop
+    const displayCards = cardsList.length < 5 ? [...cardsList, ...cardsList, ...cardsList] : [...cardsList, ...cardsList];
+
+    track.innerHTML = '';
+
+    displayCards.forEach((card) => {
+      const cardEl = document.createElement('a');
+      cardEl.className = 'reel-card';
+      cardEl.href = card.reelUrl || data.profileUrl || 'https://instagram.com';
+      cardEl.target = '_blank';
+      cardEl.setAttribute('aria-label', `Watch reel by ${card.handle || 'Instagram'}`);
+
+      const videoHTML = card.videoUrl
+        ? `<video class="reel-card-video" autoplay muted loop playsinline poster="${card.posterUrl || ''}">
+            <source src="${card.videoUrl}" type="video/mp4">
+           </video>`
+        : (card.posterUrl ? `<img src="${card.posterUrl}" class="reel-card-poster" alt="Reel preview">` : `<div class="reel-card-video" style="background:#222;"></div>`);
+
+      cardEl.innerHTML = `
+        ${videoHTML}
+        <div class="reel-card-overlay"></div>
+        <div class="reel-card-handle">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+          </svg>
+          <span>${card.handle || '@EURECO.MEDIA'}</span>
+        </div>
+        <div class="reel-card-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </div>
+        ${card.quote ? `<div class="reel-card-quote">${card.quote}</div>` : ''}
+      `;
+
+      track.appendChild(cardEl);
+    });
+  }
+
+  function initReelsSection() {
+    const raw = localStorage.getItem('eureco_site_data');
+    let data;
+    if (raw) {
+      try { data = JSON.parse(raw); } catch(e) { data = null; }
+    }
+
+    if (!data) {
+      data = { reelsSection: defaultReelsData, hiddenContainers: { reels: false } };
+      localStorage.setItem('eureco_site_data', JSON.stringify(data));
+    } else if (!data.reelsSection) {
+      data.reelsSection = defaultReelsData;
+      localStorage.setItem('eureco_site_data', JSON.stringify(data));
+    }
+
+    renderReelsSection(data.reelsSection);
+  }
+
+  initReelsSection();
+
+  // Listen for storage events (live sync from Admin Panel)
+  window.addEventListener('storage', () => {
+    applyDynamicSiteData();
     const raw = localStorage.getItem('eureco_site_data');
     if (raw) {
       try {
         const data = JSON.parse(raw);
-        if (data.team && data.team.length > 0) {
-          renderTeamCarousel(data.team);
-        }
+        if (data.reelsSection) renderReelsSection(data.reelsSection);
       } catch(e) {}
     }
   });
 
 });
+

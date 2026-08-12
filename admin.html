@@ -640,6 +640,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
           <span>Team Members</span>
         </a>
+        <a class="admin-nav-item" data-tab="reels">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke-width="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke-width="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke-width="2"/></svg>
+          <span>Instagram Reels</span>
+        </a>
         <a class="admin-nav-item" data-tab="submissions">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           <span>Form Submissions</span>
@@ -787,6 +791,17 @@
                 </div>
                 <label class="switch">
                   <input type="checkbox" id="toggleAwards" checked data-container="awards">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="container-toggle-item">
+                <div class="container-info">
+                  <span class="container-name">Instagram Reels Section</span>
+                  <span class="container-desc">Moving client reels marquee slider with video previews & IG profile CTA</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggleReels" checked data-container="reels">
                   <span class="slider"></span>
                 </label>
               </div>
@@ -1077,6 +1092,107 @@
                   </tr>
                 </thead>
                 <tbody id="teamTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB: INSTAGRAM REELS MANAGER -->
+        <section class="admin-tab-content" id="tab-reels">
+          <div class="admin-card" style="margin-bottom: 32px;">
+            <div class="admin-card-title">Reels Section Header & Instagram Profile Button</div>
+            <form id="reelsHeaderForm">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                <div class="admin-form-group">
+                  <label>Section Tagline (e.g. WHOM WE BRANDED)</label>
+                  <input type="text" id="reelsTaglineInput" class="admin-input" value="WHOM WE BRANDED">
+                </div>
+                <div class="admin-form-group">
+                  <label>Title Prefix (e.g. HEAR FROM)</label>
+                  <input type="text" id="reelsTitlePrefixInput" class="admin-input" value="HEAR FROM">
+                </div>
+                <div class="admin-form-group">
+                  <label>Title Highlight Word (Red)</label>
+                  <input type="text" id="reelsTitleHighlightInput" class="admin-input" value="OUR">
+                </div>
+                <div class="admin-form-group">
+                  <label>Title Suffix (e.g. CLIENTS)</label>
+                  <input type="text" id="reelsTitleSuffixInput" class="admin-input" value="CLIENTS">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="admin-form-group">
+                  <label>Instagram Profile URL (Opened by CTA button)</label>
+                  <input type="url" id="reelsProfileUrlInput" class="admin-input" value="https://instagram.com/desgro.media" required>
+                </div>
+                <div class="admin-form-group">
+                  <label>CTA Button Text</label>
+                  <input type="text" id="reelsButtonTextInput" class="admin-input" value="VIEW MORE ON INSTAGRAM" required>
+                </div>
+              </div>
+
+              <button type="submit" class="admin-btn admin-btn-primary">Save Section Header Settings</button>
+            </form>
+          </div>
+
+          <!-- Add / Edit Reel Card Form -->
+          <div class="admin-card" style="margin-bottom: 32px;">
+            <div class="admin-card-title">Add / Edit Reel Card</div>
+            <form id="reelCardForm">
+              <input type="hidden" id="reelEditIndex" value="-1">
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="admin-form-group">
+                  <label>Instagram Handle (e.g. @DESGRO.MEDIA)</label>
+                  <input type="text" id="reelHandleInput" class="admin-input" placeholder="@DESGRO.MEDIA" required>
+                </div>
+                <div class="admin-form-group">
+                  <label>Reel Redirect Link (Instagram URL)</label>
+                  <input type="url" id="reelUrlInput" class="admin-input" placeholder="https://www.instagram.com/reel/..." required>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="admin-form-group">
+                  <label>Video Preview Source URL (MP4 / WebM)</label>
+                  <input type="url" id="reelVideoUrlInput" class="admin-input" placeholder="https://assets.mixkit.co/.../video.mp4">
+                  <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Direct MP4 link for inline muted video preview playback</p>
+                </div>
+                <div class="admin-form-group">
+                  <label>Poster Cover Image URL (Optional)</label>
+                  <input type="text" id="reelPosterUrlInput" class="admin-input" placeholder="assets/images/poster.jpg">
+                </div>
+              </div>
+
+              <div class="admin-form-group" style="margin-bottom: 20px;">
+                <label>Client Quote Subtitle Overlay</label>
+                <textarea id="reelQuoteInput" class="admin-input" rows="2" placeholder="e.g. Desgro brought me to that exact place I envisioned."></textarea>
+              </div>
+
+              <div style="display: flex; gap: 12px;">
+                <button type="submit" class="admin-btn admin-btn-primary" id="saveReelBtn">Add Reel Card</button>
+                <button type="button" class="admin-btn" id="cancelReelBtn" style="display:none;" onclick="resetReelForm()">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Existing Reels List Table -->
+          <div class="admin-card">
+            <div class="admin-card-title">Active Reel Cards</div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Handle</th>
+                    <th>Video / Preview</th>
+                    <th>Instagram Link</th>
+                    <th>Quote</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reelsTableBody">
                 </tbody>
               </table>
             </div>

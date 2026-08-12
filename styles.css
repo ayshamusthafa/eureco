@@ -2344,3 +2344,261 @@ body,
     display: none;
   }
 }
+
+/* ============================================================
+   INSTAGRAM REELS MOVING CARDS CONTAINER
+   ============================================================ */
+.reels-section {
+  padding: 100px 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-primary);
+  transition: background-color 0.4s ease;
+}
+
+.reels-header {
+  margin-bottom: 50px;
+  text-align: left;
+}
+
+.reels-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.reels-tagline-dash {
+  width: 32px;
+  height: 3px;
+  background-color: #FF2E4D;
+  border-radius: 2px;
+}
+
+.reels-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.reels-title-highlight {
+  color: #FF2E4D;
+}
+
+/* Marquee Track Container */
+.reels-marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  padding: 20px 0 40px 0;
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+}
+
+.reels-track {
+  display: flex;
+  gap: 28px;
+  width: max-content;
+  animation: reelsMarquee 38s linear infinite;
+  will-change: transform;
+}
+
+.reels-marquee-wrapper:hover .reels-track {
+  animation-play-state: paused;
+}
+
+@keyframes reelsMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Vertical Reel Card (9:16 Aspect Ratio) */
+.reel-card {
+  flex: 0 0 300px;
+  height: 520px;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  text-decoration: none;
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.reel-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  border-color: rgba(255, 46, 77, 0.7);
+  box-shadow: 0 30px 60px rgba(255, 46, 77, 0.25);
+}
+
+.reel-card-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+
+.reel-card-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Reel Card Overlay Gradients */
+.reel-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.4) 45%, rgba(0, 0, 0, 0.15) 100%);
+  pointer-events: none;
+}
+
+/* Handle Badge at top */
+.reel-card-handle {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 2;
+}
+
+.reel-card-handle svg {
+  width: 14px;
+  height: 14px;
+  color: #FF2E4D;
+}
+
+.reel-card-badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 2;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.reel-card:hover .reel-card-badge {
+  background: #FF2E4D;
+  transform: scale(1.1);
+  border-color: #FF2E4D;
+}
+
+.reel-card-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Bottom Client Quote Subtitle */
+.reel-card-quote {
+  position: absolute;
+  bottom: 22px;
+  left: 20px;
+  right: 20px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.92);
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.reel-card-quote span {
+  color: #FF2E4D;
+  font-weight: 600;
+}
+
+/* Instagram Profile CTA Button */
+.reels-cta-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 45px;
+}
+
+.reels-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 36px;
+  background: rgba(18, 18, 18, 0.95);
+  border: 1.5px solid #FF2E4D;
+  border-radius: 4px;
+  color: #FFFFFF;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reels-profile-btn:hover {
+  background: #FF2E4D;
+  color: #FFFFFF;
+  box-shadow: 0 12px 35px rgba(255, 46, 77, 0.4);
+  transform: translateY(-4px);
+  opacity: 1;
+}
+
+.reels-ig-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .reels-section {
+    padding: 60px 0;
+  }
+  .reel-card {
+    flex: 0 0 240px;
+    height: 420px;
+  }
+  .reels-profile-btn {
+    padding: 14px 24px;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+}
+
