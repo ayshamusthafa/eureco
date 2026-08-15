@@ -13,6 +13,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
   let currentProgress = 0;
   
+  // Team 3D Carousel Engine state variables
+  let teamCarouselAngle = 0;
+  let teamCarouselRadius = 350;
+  let teamIsDragging = false;
+  let teamDragStartX = 0;
+  let teamDragAngle = 0;
+  let teamVelocity = 0;
+  let teamAnimFrame = null;
+  let teamIsAutoSpinning = true;
+  
   // Disable body scrolling during load
   document.body.style.overflow = 'hidden';
   
@@ -722,14 +732,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // TEAM 3D CAROUSEL ENGINE
   // ============================================================
-  let teamCarouselAngle = 0;
-  let teamCarouselRadius = 350;
-  let teamIsDragging = false;
-  let teamDragStartX = 0;
-  let teamDragAngle = 0;
-  let teamVelocity = 0;
-  let teamAnimFrame = null;
-  let teamIsAutoSpinning = true;
 
   function renderTeamCarousel(team) {
     const carousel = document.getElementById('teamCarousel');

@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Helper functions for localStorage
+  // Helper functions for localStorage & form data
   function getSiteData() {
     const raw = localStorage.getItem('eureco_site_data');
     if (!raw) {
@@ -127,6 +127,97 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {
       return defaultSiteData;
     }
+  }
+
+  function collectAllAdminFormData() {
+    const siteData = getSiteData();
+
+    // 1. Site Branding & Settings
+    const sTitle = document.getElementById('siteTitle');
+    if (sTitle && sTitle.value) siteData.siteTitle = sTitle.value.trim();
+    const fUrl = document.getElementById('faviconUrl');
+    if (fUrl && fUrl.value) siteData.faviconUrl = fUrl.value.trim();
+    const lL = document.getElementById('logoLight');
+    if (lL && lL.value) siteData.logoLightUrl = lL.value.trim();
+    const lD = document.getElementById('logoDark');
+    if (lD && lD.value) siteData.logoDarkUrl = lD.value.trim();
+
+    // 2. Hidden Containers
+    siteData.hiddenContainers = siteData.hiddenContainers || {};
+    const tHero = document.getElementById('toggleHero');
+    if (tHero) siteData.hiddenContainers.hero = !tHero.checked;
+    const tServ = document.getElementById('toggleServices');
+    if (tServ) siteData.hiddenContainers.services = !tServ.checked;
+    const tProj = document.getElementById('toggleProjects');
+    if (tProj) siteData.hiddenContainers.projects = !tProj.checked;
+    const tAwd = document.getElementById('toggleAwards');
+    if (tAwd) siteData.hiddenContainers.awards = !tAwd.checked;
+    const tReel = document.getElementById('toggleReels');
+    if (tReel) siteData.hiddenContainers.reels = !tReel.checked;
+    const tTeam = document.getElementById('toggleTeam');
+    if (tTeam) siteData.hiddenContainers.team = !tTeam.checked;
+    const tCont = document.getElementById('toggleContact');
+    if (tCont) siteData.hiddenContainers.contact = !tCont.checked;
+    const tFoot = document.getElementById('toggleFooter');
+    if (tFoot) siteData.hiddenContainers.footer = !tFoot.checked;
+
+    // 3. Hero & Stats
+    siteData.hero = siteData.hero || {};
+    const h1 = document.getElementById('heroLine1');
+    if (h1) siteData.hero.line1 = h1.value.trim();
+    const h2 = document.getElementById('heroLine2');
+    if (h2) siteData.hero.line2 = h2.value.trim();
+    const h3 = document.getElementById('heroLine3');
+    if (h3) siteData.hero.line3 = h3.value.trim();
+    const hImg = document.getElementById('hero3dImage');
+    if (hImg) siteData.hero.image3d = hImg.value.trim();
+    const hTag = document.getElementById('heroTagline');
+    if (hTag) siteData.hero.tagline = hTag.value.trim();
+
+    const s1n = document.getElementById('stat1Num');
+    if (s1n && document.getElementById('stat1Label')) {
+      siteData.stats = [
+        { number: document.getElementById('stat1Num').value.trim(), label: document.getElementById('stat1Label').value.trim() },
+        { number: document.getElementById('stat2Num').value.trim(), label: document.getElementById('stat2Label').value.trim() },
+        { number: document.getElementById('stat3Num').value.trim(), label: document.getElementById('stat3Label').value.trim() }
+      ];
+    }
+
+    // 4. Reels Section Header
+    const rTag = document.getElementById('reelsTaglineInput');
+    if (rTag) {
+      siteData.reelsSection = siteData.reelsSection || {};
+      siteData.reelsSection.tagline = rTag.value.trim();
+      siteData.reelsSection.titlePrefix = document.getElementById('reelsTitlePrefixInput').value.trim();
+      siteData.reelsSection.titleHighlight = document.getElementById('reelsTitleHighlightInput').value.trim();
+      siteData.reelsSection.titleSuffix = document.getElementById('reelsTitleSuffixInput').value.trim();
+      siteData.reelsSection.profileUrl = document.getElementById('reelsProfileUrlInput').value.trim();
+      siteData.reelsSection.buttonText = document.getElementById('reelsButtonTextInput').value.trim();
+    }
+
+    // 5. Footer Content & Socials
+    const fEm = document.getElementById('footerEmail');
+    if (fEm) {
+      siteData.footer = siteData.footer || {};
+      siteData.footer.email = fEm.value.trim();
+      siteData.footer.copyright = document.getElementById('footerCopyright').value.trim();
+      siteData.footer.brandText = document.getElementById('footerBrandText').value.trim();
+      siteData.footer.socials = [
+        { name: document.getElementById('social1Name').value.trim(), url: document.getElementById('social1Url').value.trim() },
+        { name: document.getElementById('social2Name').value.trim(), url: document.getElementById('social2Url').value.trim() },
+        { name: document.getElementById('social3Name').value.trim(), url: document.getElementById('social3Url').value.trim() }
+      ];
+    }
+
+    // 6. Config 404
+    const c404 = document.getElementById('toggle404');
+    if (c404) {
+      siteData.config404 = siteData.config404 || {};
+      siteData.config404.enabled = c404.checked;
+      siteData.config404.customMessage = document.getElementById('custom404Text').value.trim();
+    }
+
+    return siteData;
   }
 
   function saveSiteData(data) {
@@ -262,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalPublishBtn = document.getElementById('globalPublishBtn');
   if (globalPublishBtn) {
     globalPublishBtn.addEventListener('click', () => {
-      const currentData = getSiteData();
+      const currentData = collectAllAdminFormData();
       saveSiteData(currentData);
     });
   }

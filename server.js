@@ -213,13 +213,22 @@ app.get('/api/site-data', async (req, res) => {
       return res.json({ success: true, siteData: defaultSiteData });
     }
 
-    const firstRow = rows[0];
-    const passwordKey = firstRow.Password || 'Admin@132';
-
-    if (firstRow.Data && firstRow.Data.trim().length > 0) {
-      const decrypted = decryptPayload(firstRow.Data, passwordKey);
-      if (decrypted) {
-        return res.json({ success: true, siteData: decrypted });
+    for (const row of rows) {
+      if (row.Data && row.Data.trim().length > 0) {
+        const passwordKey = row.Password || 'Admin@132';
+        const decrypted = decryptPayload(row.Data, passwordKey);
+        if (decrypted && typeof decrypted === 'object') {
+          const mergedData = {
+            ...defaultSiteData,
+            ...decrypted,
+            hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(decrypted.hiddenContainers || {}) },
+            hero: { ...defaultSiteData.hero, ...(decrypted.hero || {}) },
+            footer: { ...defaultSiteData.footer, ...(decrypted.footer || {}) },
+            reelsSection: { ...defaultSiteData.reelsSection, ...(decrypted.reelsSection || {}) },
+            config404: { ...defaultSiteData.config404, ...(decrypted.config404 || {}) }
+          };
+          return res.json({ success: true, siteData: mergedData });
+        }
       }
     }
 
