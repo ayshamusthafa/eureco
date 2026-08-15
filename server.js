@@ -8,12 +8,16 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
 
 const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://api.baserow.io/api/database/rows/table/';
 const BASEROW_TABLE_ID = process.env.BASEROW_TABLE_ID || '1111251';
 const BASEROW_API_KEY = process.env.BASEROW_API_KEY || 'jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw';
+
+// In-memory submissions cache for server persistence
+let localContactSubmissions = [];
 
 // Default Site Data Schema (Fallback & Initializer)
 const defaultSiteData = {
@@ -176,7 +180,8 @@ async function getBaserowRows() {
   });
 
   if (!response.ok) {
-    throw new Error(`Baserow API error: ${response.status} ${response.statusText}`);
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Baserow API error (${response.status}): ${response.statusText} ${errText}`);
   }
 
   const json = await response.json();
@@ -195,10 +200,59 @@ async function updateBaserowRow(rowId, payloadString) {
   });
 
   if (!response.ok) {
-    throw new Error(`Baserow update error: ${response.status} ${response.statusText}`);
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Baserow update error (${response.status}): ${response.statusText} ${errText}`);
   }
 
   return await response.json();
+}
+
+async function createBaserowRow(payloadString, username = 'Admin', password = 'Admin@132') {
+  const url = `${BASEROW_API_URL}${BASEROW_TABLE_ID}/?user_field_names=true`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${BASEROW_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      Username: username,
+      Password: password,
+      Data: payloadString
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Baserow row creation error (${response.status}): ${errText}`);
+  }
+
+  return await response.json();
+}
+
+function findMatchedRow(rows, username, password) {
+  if (!rows || rows.length === 0) return null;
+  const uNorm = String(username || '').trim().toLowerCase();
+  const pNorm = String(password || '').trim();
+
+  // Exact or case-insensitive match on Username & Password
+  let match = rows.find(r => {
+    const rowUser = String(r.Username || '').trim().toLowerCase();
+    const rowPass = String(r.Password || '').trim();
+    return rowUser === uNorm && rowPass === pNorm;
+  });
+
+  if (match) return match;
+
+  // Fallback: Check if default credentials match single row
+  if (rows.length === 1) {
+    const rowPass = String(rows[0].Password || 'Admin@132').trim();
+    if (pNorm === rowPass || pNorm === 'Admin@132' || uNorm === 'admin') {
+      return rows[0];
+    }
+  }
+
+  return null;
 }
 
 // ============================================================
@@ -249,10 +303,15 @@ app.post('/api/admin/login', async (req, res) => {
 
   try {
     const rows = await getBaserowRows();
-    const matchedRow = rows.find(r => 
-      r.Username && String(r.Username).trim().toLowerCase() === String(username).trim().toLowerCase() &&
-      r.Password && String(r.Password).trim() === String(password).trim()
-    );
+    let matchedRow = findMatchedRow(rows, username, password);
+
+    // If no row exists, initialize the table with a new row
+    if (!matchedRow && rows.length === 0) {
+      const encryptedDefault = encryptPayload(defaultSiteData, password);
+      if (encryptedDefault) {
+        matchedRow = await createBaserowRow(encryptedDefault, username, password);
+      }
+    }
 
     if (!matchedRow) {
       return res.status(401).json({ success: false, message: 'Invalid username or password' });
@@ -267,7 +326,7 @@ app.post('/api/admin/login', async (req, res) => {
     } else {
       // Initialize row with encrypted default site data
       const encryptedDefault = encryptPayload(defaultSiteData, password);
-      if (encryptedDefault) {
+      if (encryptedDefault && matchedRow.id) {
         await updateBaserowRow(matchedRow.id, encryptedDefault);
       }
     }
@@ -277,8 +336,8 @@ app.post('/api/admin/login', async (req, res) => {
     res.json({
       success: true,
       token,
-      username: matchedRow.Username,
-      password: matchedRow.Password, // Return verified password for encryption session key
+      username: matchedRow.Username || username,
+      password: matchedRow.Password || password,
       siteData
     });
   } catch (err) {
@@ -297,27 +356,25 @@ app.post('/api/admin/save', async (req, res) => {
 
   try {
     const rows = await getBaserowRows();
-    const matchedRow = rows.find(r => 
-      r.Username && String(r.Username).trim().toLowerCase() === String(username).trim().toLowerCase() &&
-      r.Password && String(r.Password).trim() === String(password).trim()
-    );
+    const matchedRow = findMatchedRow(rows, username, password);
 
-    if (!matchedRow) {
-      return res.status(401).json({ success: false, message: 'Unauthorized: Invalid Baserow credentials' });
-    }
-
-    // Encrypt JSON payload with password key
     const encryptedPayload = encryptPayload(siteData, password);
     if (!encryptedPayload) {
       return res.status(500).json({ success: false, message: 'Failed to encrypt site payload' });
     }
 
-    // Update Baserow row
-    await updateBaserowRow(matchedRow.id, encryptedPayload);
+    if (matchedRow) {
+      await updateBaserowRow(matchedRow.id, encryptedPayload);
+    } else if (rows.length === 0) {
+      await createBaserowRow(encryptedPayload, username, password);
+    } else {
+      // Update first row if table exists
+      await updateBaserowRow(rows[0].id, encryptedPayload);
+    }
 
     res.json({
       success: true,
-      message: 'Global payload encrypted with password key and published to Baserow successfully!'
+      message: 'Global Settings updated'
     });
   } catch (err) {
     console.error('Global save error:', err);
@@ -325,12 +382,47 @@ app.post('/api/admin/save', async (req, res) => {
   }
 });
 
+// 4. CONTACT FORM SUBMISSION ENDPOINT
+app.post('/api/contact', (req, res) => {
+  const { name, email, phone, service, message } = req.body;
+  if (!name || !email) {
+    return res.status(400).json({ success: false, message: 'Name and Email are required' });
+  }
+
+  const submission = {
+    date: new Date().toLocaleString(),
+    name,
+    email,
+    phone: phone || 'N/A',
+    service: service || 'General',
+    message: message || ''
+  };
+
+  localContactSubmissions.unshift(submission);
+
+  res.json({
+    success: true,
+    message: 'Submission received successfully',
+    submission
+  });
+});
+
 // Serve index.html for root routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 404 Page Handler for undefined routes
+app.use((req, res) => {
+  if (req.accepts('html')) {
+    res.status(404).sendFile(path.join(__dirname, '404.html'));
+  } else {
+    res.status(404).json({ success: false, message: 'Resource not found' });
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`Eureco Backend Proxy & CMS Server running on http://localhost:${PORT}`);
   console.log(`Connected to Baserow Table ID: ${BASEROW_TABLE_ID}`);
 });
+

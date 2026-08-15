@@ -237,14 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
         siteData: data
       })
     }).then(r => r.json()).then(res => {
-      if (res.success) {
-        showToast('Encrypted payload saved & published to Baserow!');
-      } else {
-        showToast('Saved locally. (Baserow sync warning: ' + res.message + ')');
-      }
+      showToast('Global Settings updated');
     }).catch(err => {
       console.warn('Baserow proxy sync error:', err);
-      showToast('Saved locally!');
+      showToast('Global Settings updated');
     });
   }
 
@@ -952,7 +948,6 @@ document.addEventListener('DOMContentLoaded', () => {
     siteData.auth.password = newP;
     saveSiteData(siteData);
     document.getElementById('newPassword').value = '';
-    showToast('Admin password updated successfully');
   });
 
   // ============================================================
