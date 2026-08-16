@@ -492,11 +492,6 @@ document.addEventListener('DOMContentLoaded', () => {
       item.classList.toggle('active', item.getAttribute('data-tab') === tabId);
     });
 
-    const mobileNavItems = document.querySelectorAll('.admin-mobile-nav-item');
-    mobileNavItems.forEach(mItem => {
-      mItem.classList.toggle('active', mItem.getAttribute('data-tab') === tabId);
-    });
-
     tabContents.forEach(content => {
       content.classList.toggle('active', content.id === `tab-${tabId}`);
     });
@@ -523,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Mobile App Navigation Handlers
+  // Mobile Navigation Drawer Handlers
   const mobileMenuBtn = document.getElementById('adminMobileMenuToggle');
   const drawerOverlay = document.getElementById('adminDrawerOverlay');
   const adminSidebar = document.querySelector('.admin-sidebar');
@@ -541,18 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
       drawerOverlay.classList.remove('active');
     });
   }
-
-  const mobileNavItems = document.querySelectorAll('.admin-mobile-nav-item');
-  mobileNavItems.forEach(mItem => {
-    mItem.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tabId = mItem.getAttribute('data-tab');
-      switchTab(tabId);
-      if (tabId === 'submissions' || tabId === 'dashboard') {
-        syncSubmissionsOnly();
-      }
-    });
-  });
 
   // ============================================================
   // DASHBOARD DATA RENDERER & INITIALIZATION
