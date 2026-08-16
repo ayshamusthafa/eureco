@@ -16,9 +16,6 @@ const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://api.baserow.io/a
 const BASEROW_TABLE_ID = process.env.BASEROW_TABLE_ID || '1111251';
 const BASEROW_API_KEY = process.env.BASEROW_API_KEY || 'jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw';
 
-// Deterministic Master Secret Key for Site Payload Encryption across all devices
-const MASTER_ENCRYPTION_SECRET = process.env.MASTER_ENCRYPTION_SECRET || 'EURECO_GLOBAL_MASTER_KEY_2026';
-
 // In-memory submissions cache for server persistence
 let localContactSubmissions = [];
 
@@ -130,59 +127,45 @@ const defaultSiteData = {
 };
 
 // ============================================================
-// AES-256-CBC ENCRYPTION HELPERS
+// LEGACY DECRYPTION (for migrating old encrypted data)
+// If old encrypted data exists in Baserow, this will read it once
+// and the next save will store it as plain JSON.
 // ============================================================
-function getKey(secretKey) {
-  return crypto.createHash('sha256').update(String(secretKey)).digest();
-}
-
-function encryptPayload(dataObject, secretKey = MASTER_ENCRYPTION_SECRET) {
-  try {
-    const key = getKey(secretKey);
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-    const jsonStr = JSON.stringify(dataObject);
-    let encrypted = cipher.update(jsonStr, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return `${iv.toString('hex')}:${encrypted}`;
-  } catch (err) {
-    console.error('Encryption error:', err);
-    return null;
-  }
-}
-
-function decryptPayload(encryptedString, primarySecret = MASTER_ENCRYPTION_SECRET) {
+function legacyDecrypt(encryptedString) {
   if (!encryptedString || typeof encryptedString !== 'string') return null;
-
-  // Try primary master secret first, then legacy password keys for backwards compatibility
-  const keysToTry = [
-    primarySecret,
-    'Admin@132',
-    'admin',
-    'Admin',
-    'eureco123'
-  ];
-
+  const keysToTry = ['EURECO_GLOBAL_MASTER_KEY_2026', 'Admin@132', 'admin', 'Admin', 'eureco123'];
   for (const secretKey of keysToTry) {
     try {
       const parts = encryptedString.split(':');
       if (parts.length !== 2) continue;
       const iv = Buffer.from(parts[0], 'hex');
       const encryptedText = Buffer.from(parts[1], 'hex');
-      const key = getKey(secretKey);
+      const key = crypto.createHash('sha256').update(String(secretKey)).digest();
       const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
       let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       const parsed = JSON.parse(decrypted);
-      if (parsed && typeof parsed === 'object') {
-        return parsed;
-      }
-    } catch (err) {
-      // Try next key in list
-    }
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (err) { /* try next */ }
+  }
+  return null;
+}
+
+// Parse the Data field from Baserow — handles both plain JSON and legacy encrypted data
+function parseRowData(dataString) {
+  if (!dataString || typeof dataString !== 'string' || dataString.trim().length === 0) return null;
+  const trimmed = dataString.trim();
+
+  // Try plain JSON first
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (e) { /* not valid JSON, try legacy decrypt */ }
   }
 
-  return null;
+  // Fallback: try legacy encrypted format (hex:hex)
+  return legacyDecrypt(trimmed);
 }
 
 // ============================================================
@@ -252,8 +235,9 @@ async function createBaserowRow(payloadString, username = 'Admin', password = 'A
 async function getPrimaryBaserowRow() {
   const rows = await getBaserowRows();
   if (!rows || rows.length === 0) {
-    const encryptedDefault = encryptPayload(defaultSiteData, MASTER_ENCRYPTION_SECRET);
-    const newRow = await createBaserowRow(encryptedDefault, 'Admin', 'Admin@132');
+    // Store plain JSON — no encryption
+    const plainDefault = JSON.stringify(defaultSiteData);
+    const newRow = await createBaserowRow(plainDefault, 'Admin', 'Admin@132');
     return newRow;
   }
   return rows[0];
@@ -293,20 +277,18 @@ app.get('/api/site-data', async (req, res) => {
   res.setHeader('Expires', '0');
   try {
     const row = await getPrimaryBaserowRow();
-    if (row && row.Data && row.Data.trim().length > 0) {
-      const decrypted = decryptPayload(row.Data, MASTER_ENCRYPTION_SECRET);
-      if (decrypted && typeof decrypted === 'object') {
-        const mergedData = {
-          ...defaultSiteData,
-          ...decrypted,
-          hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(decrypted.hiddenContainers || {}) },
-          hero: { ...defaultSiteData.hero, ...(decrypted.hero || {}) },
-          footer: { ...defaultSiteData.footer, ...(decrypted.footer || {}) },
-          reelsSection: { ...defaultSiteData.reelsSection, ...(decrypted.reelsSection || {}) },
-          config404: { ...defaultSiteData.config404, ...(decrypted.config404 || {}) }
-        };
-        return res.json({ success: true, siteData: mergedData });
-      }
+    const parsed = parseRowData(row.Data);
+    if (parsed) {
+      const mergedData = {
+        ...defaultSiteData,
+        ...parsed,
+        hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(parsed.hiddenContainers || {}) },
+        hero: { ...defaultSiteData.hero, ...(parsed.hero || {}) },
+        footer: { ...defaultSiteData.footer, ...(parsed.footer || {}) },
+        reelsSection: { ...defaultSiteData.reelsSection, ...(parsed.reelsSection || {}) },
+        config404: { ...defaultSiteData.config404, ...(parsed.config404 || {}) }
+      };
+      return res.json({ success: true, siteData: mergedData });
     }
 
     return res.json({ success: true, siteData: defaultSiteData });
@@ -328,8 +310,8 @@ app.post('/api/admin/login', async (req, res) => {
     let matchedRow = findMatchedRow(rows, username, password);
 
     if (!matchedRow && rows.length === 0) {
-      const encryptedDefault = encryptPayload(defaultSiteData, MASTER_ENCRYPTION_SECRET);
-      matchedRow = await createBaserowRow(encryptedDefault, username, password);
+      const plainDefault = JSON.stringify(defaultSiteData);
+      matchedRow = await createBaserowRow(plainDefault, username, password);
     }
 
     if (!matchedRow) {
@@ -337,16 +319,12 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     let siteData = defaultSiteData;
-    if (matchedRow.Data && matchedRow.Data.trim().length > 0) {
-      const decrypted = decryptPayload(matchedRow.Data, MASTER_ENCRYPTION_SECRET);
-      if (decrypted) {
-        siteData = decrypted;
-      }
-    } else {
-      const encryptedDefault = encryptPayload(defaultSiteData, MASTER_ENCRYPTION_SECRET);
-      if (encryptedDefault && matchedRow.id) {
-        await updateBaserowRow(matchedRow.id, encryptedDefault);
-      }
+    const parsed = parseRowData(matchedRow.Data);
+    if (parsed) {
+      siteData = parsed;
+    } else if (matchedRow.id) {
+      // Initialize row with plain JSON default
+      await updateBaserowRow(matchedRow.id, JSON.stringify(defaultSiteData));
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -364,7 +342,7 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
-// 3. ADMIN GLOBAL SAVE / INITIALIZE PAYLOAD ENDPOINT
+// 3. ADMIN GLOBAL SAVE — stores plain JSON to Baserow (no encryption)
 app.post('/api/admin/save', async (req, res) => {
   const { username, password, siteData } = req.body;
 
@@ -375,13 +353,9 @@ app.post('/api/admin/save', async (req, res) => {
   try {
     const row = await getPrimaryBaserowRow();
 
-    // Encrypt payload using deterministic master encryption secret
-    const encryptedPayload = encryptPayload(siteData, MASTER_ENCRYPTION_SECRET);
-    if (!encryptedPayload) {
-      return res.status(500).json({ success: false, message: 'Failed to encrypt site payload' });
-    }
-
-    await updateBaserowRow(row.id, encryptedPayload);
+    // Store as plain JSON string — no encryption
+    const plainPayload = JSON.stringify(siteData);
+    await updateBaserowRow(row.id, plainPayload);
 
     res.json({
       success: true,
