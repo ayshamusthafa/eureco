@@ -26,7 +26,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // Disable body scrolling during load
   document.body.style.overflow = 'hidden';
   
-  // Fetch live site payload from Baserow Proxy on page start
+  let preloaderFinished = false;
+
+  function updatePreloader(value) {
+    if (preloaderBarFill) preloaderBarFill.style.width = `${value}%`;
+    if (preloaderPercent) preloaderPercent.textContent = `${value}%`;
+  }
+
+  function finishPreloader() {
+    if (preloaderFinished) return;
+    preloaderFinished = true;
+
+    const finishInterval = setInterval(() => {
+      if (currentProgress < 100) {
+        currentProgress = Math.min(currentProgress + 10, 100);
+        updatePreloader(currentProgress);
+      } else {
+        clearInterval(finishInterval);
+        setTimeout(hidePreloader, 350);
+      }
+    }, 25);
+  }
+
+  function hidePreloader() {
+    if (preloader && !preloader.classList.contains('fade-out')) {
+      preloader.classList.add('fade-out');
+      document.body.classList.add('loaded');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Preloader progress animation while waiting for live site data from Baserow
+  const progressInterval = setInterval(() => {
+    if (!preloaderFinished && currentProgress < 90) {
+      const increment = Math.floor(Math.random() * 8) + 2;
+      currentProgress = Math.min(currentProgress + increment, 90);
+      updatePreloader(currentProgress);
+    }
+  }, 80);
+
+  // Fetch live site payload from Baserow Proxy on page start (while loader is active)
   fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
     .then(r => r.json())
     .then(res => {
@@ -37,48 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
       }
     })
-    .catch(err => console.warn('Could not fetch remote site-data from Baserow proxy:', err));
+    .catch(err => console.warn('Could not fetch remote site-data from Baserow proxy:', err))
+    .finally(() => {
+      // Data loaded and applied to DOM -> complete preloader smoothly
+      clearInterval(progressInterval);
+      finishPreloader();
+    });
 
-  const progressInterval = setInterval(() => {
-    if (currentProgress < 90) {
-      const increment = Math.floor(Math.random() * 8) + 1;
-      currentProgress = Math.min(currentProgress + increment, 90);
-      updatePreloader(currentProgress);
-    }
-  }, 100);
-  
-  function updatePreloader(value) {
-    if (preloaderBarFill) preloaderBarFill.style.width = `${value}%`;
-    if (preloaderPercent) preloaderPercent.textContent = `${value}%`;
-  }
-  
-  window.addEventListener('load', () => {
-    clearInterval(progressInterval);
-    
-    const finalInterval = setInterval(() => {
-      if (currentProgress < 100) {
-        currentProgress += 5;
-        updatePreloader(Math.min(currentProgress, 100));
-      } else {
-        clearInterval(finalInterval);
-        setTimeout(hidePreloader, 400);
-      }
-    }, 30);
-  });
-  
-  // Safety fallback
+  // Safety fallback (max loader duration: 3 seconds)
   setTimeout(() => {
     clearInterval(progressInterval);
-    hidePreloader();
-  }, 3500);
-  
-  function hidePreloader() {
-    if (preloader && !preloader.classList.contains('fade-out')) {
-      preloader.classList.add('fade-out');
-      document.body.classList.add('loaded');
-      document.body.style.overflow = '';
-    }
-  }
+    finishPreloader();
+  }, 3000);
 
   // ============================================================
   // THEME TOGGLE

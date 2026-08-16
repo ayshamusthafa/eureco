@@ -537,23 +537,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   document.getElementById('heroForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const siteData = getSiteData();
-    siteData.hero.line1 = document.getElementById('heroLine1').value.trim();
-    siteData.hero.line2 = document.getElementById('heroLine2').value.trim();
-    siteData.hero.line3 = document.getElementById('heroLine3').value.trim();
-    siteData.hero.image3d = document.getElementById('hero3dImage').value.trim();
-    siteData.hero.tagline = document.getElementById('heroTagline').value.trim();
+    const siteData = collectAllAdminFormData();
     saveSiteData(siteData);
   });
 
   document.getElementById('statsForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const siteData = getSiteData();
-    siteData.stats = [
-      { number: document.getElementById('stat1Num').value.trim(), label: document.getElementById('stat1Label').value.trim() },
-      { number: document.getElementById('stat2Num').value.trim(), label: document.getElementById('stat2Label').value.trim() },
-      { number: document.getElementById('stat3Num').value.trim(), label: document.getElementById('stat3Label').value.trim() }
-    ];
+    const siteData = collectAllAdminFormData();
     saveSiteData(siteData);
   });
 
@@ -911,17 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   document.getElementById('footerForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const siteData = getSiteData();
-    siteData.footer = {
-      email: document.getElementById('footerEmail').value.trim(),
-      copyright: document.getElementById('footerCopyright').value.trim(),
-      brandText: document.getElementById('footerBrandText').value.trim(),
-      socials: [
-        { name: document.getElementById('social1Name').value.trim(), url: document.getElementById('social1Url').value.trim() },
-        { name: document.getElementById('social2Name').value.trim(), url: document.getElementById('social2Url').value.trim() },
-        { name: document.getElementById('social3Name').value.trim(), url: document.getElementById('social3Url').value.trim() }
-      ]
-    };
+    const siteData = collectAllAdminFormData();
     saveSiteData(siteData);
   });
 
@@ -930,18 +910,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   document.getElementById('settingsForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const siteData = getSiteData();
-    siteData.siteTitle = document.getElementById('siteTitle').value.trim();
-    siteData.faviconUrl = document.getElementById('faviconUrl').value.trim();
-    siteData.logoLightUrl = document.getElementById('logoLight').value.trim();
-    siteData.logoDarkUrl = document.getElementById('logoDark').value.trim();
+    const siteData = collectAllAdminFormData();
     saveSiteData(siteData);
   });
 
   window.save404Settings = function() {
-    const siteData = getSiteData();
-    siteData.config404.enabled = document.getElementById('toggle404').checked;
-    siteData.config404.customMessage = document.getElementById('custom404Text').value.trim();
+    const siteData = collectAllAdminFormData();
     saveSiteData(siteData);
     document.getElementById('dash404Status').textContent = siteData.config404.enabled ? 'ON' : 'OFF';
   };
@@ -957,7 +931,8 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const newP = document.getElementById('newPassword').value.trim();
     if (!newP) return;
-    const siteData = getSiteData();
+    const siteData = collectAllAdminFormData();
+    siteData.auth = siteData.auth || {};
     siteData.auth.password = newP;
     saveSiteData(siteData);
     document.getElementById('newPassword').value = '';
@@ -970,16 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (reelsHeaderForm) {
     reelsHeaderForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const siteData = getSiteData();
-      if (!siteData.reelsSection) siteData.reelsSection = {};
-
-      siteData.reelsSection.tagline = document.getElementById('reelsTaglineInput').value.trim();
-      siteData.reelsSection.titlePrefix = document.getElementById('reelsTitlePrefixInput').value.trim();
-      siteData.reelsSection.titleHighlight = document.getElementById('reelsTitleHighlightInput').value.trim();
-      siteData.reelsSection.titleSuffix = document.getElementById('reelsTitleSuffixInput').value.trim();
-      siteData.reelsSection.profileUrl = document.getElementById('reelsProfileUrlInput').value.trim();
-      siteData.reelsSection.buttonText = document.getElementById('reelsButtonTextInput').value.trim();
-
+      const siteData = collectAllAdminFormData();
       saveSiteData(siteData);
     });
   }
