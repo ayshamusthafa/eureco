@@ -76,11 +76,11 @@
       object-fit: contain;
     }
 
-    .login-logo.logo-light { display: none; }
-    .login-logo.logo-dark { display: block; }
+    .login-logo.logo-light { display: none !important; }
+    .login-logo.logo-dark { display: block !important; filter: none !important; }
 
-    [data-theme="dark"] .login-logo.logo-light { display: block; filter: brightness(10); }
-    [data-theme="dark"] .login-logo.logo-dark { display: none; }
+    [data-theme="dark"] .login-logo.logo-light { display: none !important; }
+    [data-theme="dark"] .login-logo.logo-dark { display: block !important; filter: invert(1) !important; max-height: 52px !important; }
 
     .login-title {
       font-family: 'Space Grotesk', sans-serif;
@@ -186,6 +186,13 @@
 
     .admin-sidebar-logo {
       height: 36px;
+      width: auto;
+      object-fit: contain;
+      transition: filter 0.3s ease;
+    }
+
+    [data-theme="dark"] .admin-sidebar-logo {
+      filter: invert(1) !important;
     }
 
     .admin-sidebar-brand {
