@@ -83,12 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
       finishPreloader();
     });
 
-  // Safety fallback (max loader duration: 3 seconds)
-  setTimeout(() => {
-    clearInterval(progressInterval);
-    finishPreloader();
-  }, 3000);
-
   // ============================================================
   // THEME TOGGLE
   // ============================================================

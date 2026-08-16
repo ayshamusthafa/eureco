@@ -2089,6 +2089,24 @@ body,
   transform: translateY(-100%);
 }
 
+/* Hide homepage content strictly until Baserow data fetch and DOM hydration finish */
+body:not(.loaded) > nav,
+body:not(.loaded) > section,
+body:not(.loaded) > footer {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.loaded > nav,
+body.loaded > section,
+body.loaded > footer {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.5s ease;
+}
+
 .preloader-content {
   display: flex;
   flex-direction: column;
