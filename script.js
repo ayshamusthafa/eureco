@@ -494,10 +494,10 @@ document.addEventListener('DOMContentLoaded', () => {
           data.services.forEach((s, idx) => {
             const row = document.createElement('div');
             row.className = `service-row reveal-left delay-${(idx % 3) + 1} revealed`;
-            const tagsHtml = s.tags.split(',').map(t => `<span class="service-tag">${t.trim()}</span>`).join('');
+            const tagsHtml = (s.tags || '').split(',').map(t => `<span class="service-tag">${t.trim()}</span>`).join('');
             row.innerHTML = `
-              <div class="service-row-num">${s.num}</div>
-              <div class="service-row-title">${s.title}</div>
+              <div class="service-row-num">${s.num || ''}</div>
+              <div class="service-row-title">${s.title || ''}</div>
               <div class="service-row-tags">${tagsHtml}</div>
             `;
             container.appendChild(row);
@@ -520,6 +520,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (title) title.style.opacity = '';
               });
             });
+          });
+        }
+
+        // Update hero sidebar services list as well
+        const heroServicesBox = document.querySelector('.hero-services');
+        if (heroServicesBox) {
+          heroServicesBox.innerHTML = '';
+          data.services.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'hero-service-item';
+            item.innerHTML = `
+              <span class="hero-service-num">${s.num || ''}</span>
+              <span class="hero-service-text">${s.title || ''}</span>
+            `;
+            heroServicesBox.appendChild(item);
           });
         }
       }
