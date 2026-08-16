@@ -169,6 +169,12 @@ const defaultSiteData = {
   config404: {
     enabled: false,
     customMessage: 'Page Not Found — Eureco Digital Agency'
+  },
+  whatsapp: {
+    enabled: true,
+    phone: '919876543210',
+    message: 'Hello Eureco! I would like to inquire about your digital agency services.',
+    position: 'bottom-right'
   }
 };
 
@@ -193,7 +199,8 @@ async function syncSiteDataFromBaserow() {
         reelsSection: { ...defaultSiteData.reelsSection, ...(parsed.reelsSection || {}) },
         team: Array.isArray(parsed.team) && parsed.team.length > 0 ? parsed.team : (cachedSiteData.team || defaultSiteData.team),
         footer: { ...defaultSiteData.footer, ...(parsed.footer || {}) },
-        config404: { ...defaultSiteData.config404, ...(parsed.config404 || {}) }
+        config404: { ...defaultSiteData.config404, ...(parsed.config404 || {}) },
+        whatsapp: { ...defaultSiteData.whatsapp, ...(parsed.whatsapp || {}) }
       };
       saveSiteDataToFile(cachedSiteData);
     }

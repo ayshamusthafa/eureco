@@ -701,6 +701,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      // Floating WhatsApp Action Button Hydrator
+      const waBtn = document.getElementById('floatingWhatsapp');
+      if (waBtn && data.whatsapp) {
+        if (data.whatsapp.enabled === false) {
+          waBtn.style.display = 'none';
+        } else {
+          waBtn.style.display = 'flex';
+          const cleanPhone = (data.whatsapp.phone || '919876543210').replace(/[^\d]/g, '');
+          const encodedMsg = encodeURIComponent(data.whatsapp.message || '');
+          waBtn.href = `https://wa.me/${cleanPhone}${encodedMsg ? '?text=' + encodedMsg : ''}`;
+          
+          if (data.whatsapp.position === 'bottom-left') {
+            waBtn.classList.remove('bottom-right');
+            waBtn.classList.add('bottom-left');
+          } else {
+            waBtn.classList.remove('bottom-left');
+            waBtn.classList.add('bottom-right');
+          }
+        }
+      }
+
     } catch(e) {
       console.error('Error applying dynamic site data:', e);
     }

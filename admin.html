@@ -1325,6 +1325,37 @@
           </div>
 
           <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-title">Floating WhatsApp Button Configuration</div>
+            <div class="container-toggle-item" style="margin-bottom: 20px;">
+              <div class="container-info">
+                <span class="container-name">Enable Floating WhatsApp Button</span>
+                <span class="container-desc">Shows a live floating WhatsApp action button on the website</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleWhatsapp" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="admin-form-group">
+              <label>WhatsApp Phone Number (with Country Code)</label>
+              <input type="text" id="whatsappPhone" class="admin-input" placeholder="e.g. 919876543210" value="919876543210">
+              <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">Include country code without '+' or spaces (e.g., 919876543210)</span>
+            </div>
+            <div class="admin-form-group">
+              <label>Default Message</label>
+              <input type="text" id="whatsappMessage" class="admin-input" value="Hello Eureco! I would like to inquire about your digital agency services.">
+            </div>
+            <div class="admin-form-group">
+              <label>Button Screen Position</label>
+              <select id="whatsappPosition" class="admin-input" style="background: var(--input-bg); color: var(--text-primary);">
+                <option value="bottom-right">Bottom Right</option>
+                <option value="bottom-left">Bottom Left</option>
+              </select>
+            </div>
+            <button type="button" class="admin-btn admin-btn-primary" id="saveWhatsappBtn">Save WhatsApp Settings</button>
+          </div>
+
+          <div class="admin-card" style="margin-bottom: 24px;">
             <div class="admin-card-title">404 Error Page Settings & Toggle</div>
             <div class="container-toggle-item" style="margin-bottom: 20px;">
               <div class="container-info">

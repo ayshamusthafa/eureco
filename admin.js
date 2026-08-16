@@ -117,6 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
           quote: 'Exceptional video quality and marketing execution.'
         }
       ]
+    },
+    whatsapp: {
+      enabled: true,
+      phone: '919876543210',
+      message: 'Hello Eureco! I would like to inquire about your digital agency services.',
+      position: 'bottom-right'
     }
   };
 
@@ -259,6 +265,19 @@ document.addEventListener('DOMContentLoaded', () => {
       siteData.config404 = siteData.config404 || {};
       siteData.config404.enabled = c404.checked;
       siteData.config404.customMessage = document.getElementById('custom404Text').value.trim();
+    }
+
+    // 7. WhatsApp Configuration
+    const wToggle = document.getElementById('toggleWhatsapp');
+    if (wToggle) {
+      siteData.whatsapp = siteData.whatsapp || {};
+      siteData.whatsapp.enabled = wToggle.checked;
+      const wPhone = document.getElementById('whatsappPhone');
+      if (wPhone && wPhone.value.trim()) siteData.whatsapp.phone = wPhone.value.trim();
+      const wMsg = document.getElementById('whatsappMessage');
+      if (wMsg && wMsg.value.trim()) siteData.whatsapp.message = wMsg.value.trim();
+      const wPos = document.getElementById('whatsappPosition');
+      if (wPos && wPos.value) siteData.whatsapp.position = wPos.value;
     }
 
     return siteData;
@@ -506,6 +525,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('logoDark').value = siteData.logoDarkUrl;
     document.getElementById('toggle404').checked = siteData.config404.enabled;
     document.getElementById('custom404Text').value = siteData.config404.customMessage;
+
+    // Render WhatsApp Settings
+    if (siteData.whatsapp) {
+      if (document.getElementById('toggleWhatsapp')) document.getElementById('toggleWhatsapp').checked = siteData.whatsapp.enabled !== false;
+      if (document.getElementById('whatsappPhone')) document.getElementById('whatsappPhone').value = siteData.whatsapp.phone || '919876543210';
+      if (document.getElementById('whatsappMessage')) document.getElementById('whatsappMessage').value = siteData.whatsapp.message || '';
+      if (document.getElementById('whatsappPosition')) document.getElementById('whatsappPosition').value = siteData.whatsapp.position || 'bottom-right';
+    }
 
     // Render Tables
     renderRecentSubmissions(subs);
@@ -984,6 +1011,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const siteData = collectAllAdminFormData();
     saveSiteData(siteData);
   });
+
+  const saveWhatsappBtn = document.getElementById('saveWhatsappBtn');
+  if (saveWhatsappBtn) {
+    saveWhatsappBtn.addEventListener('click', () => {
+      const siteData = collectAllAdminFormData();
+      saveSiteData(siteData);
+    });
+  }
 
   window.save404Settings = function() {
     const siteData = collectAllAdminFormData();
