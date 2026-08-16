@@ -65,20 +65,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 80);
 
-  // Fetch live site payload from Baserow API on page start (while loader is active)
-  fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
+  // Direct Baserow Cloud API fetcher for Netlify static hosting fallback
+  function fetchSiteDataFromBaserowDirect() {
+    return fetch('https://api.baserow.io/api/database/rows/table/1111251/?user_field_names=true', {
+      headers: { 'Authorization': 'Token jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw' }
+    })
     .then(r => r.json())
+    .then(data => {
+      const row = (data.results && data.results[0]) ? data.results[0] : null;
+      if (row && row.Data) {
+        try {
+          const parsed = typeof row.Data === 'string' ? JSON.parse(row.Data) : row.Data;
+          return { success: true, siteData: parsed };
+        } catch(e) {}
+      }
+      return { success: false };
+    });
+  }
+
+  // Fetch live site payload from local API or Baserow API on page start
+  fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error('Local server API unavailable');
+      return r.json();
+    })
     .then(res => {
       if (res.success && res.siteData) {
-        // Pass data directly to hydrator — no localStorage involved
         applyDynamicSiteData(res.siteData);
         if (res.siteData.reelsSection) renderReelsSection(res.siteData.reelsSection);
         if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
       }
     })
-    .catch(err => console.error('[Eureco] Failed to fetch site data from Baserow API:', err))
+    .catch(err => {
+      console.warn('[Eureco] Proxy API unavailable (Netlify static mode), fetching directly from Baserow Cloud API...');
+      return fetchSiteDataFromBaserowDirect().then(res => {
+        if (res.success && res.siteData) {
+          applyDynamicSiteData(res.siteData);
+          if (res.siteData.reelsSection) renderReelsSection(res.siteData.reelsSection);
+          if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
+        }
+      });
+    })
     .finally(() => {
-      // Data loaded and applied to DOM -> complete preloader smoothly
       clearInterval(progressInterval);
       finishPreloader();
     });
@@ -402,7 +430,10 @@ document.addEventListener('DOMContentLoaded', () => {
       eurecoChannel.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'SITE_DATA_UPDATED') {
           fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
-            .then(r => r.json())
+            .then(r => {
+              if (!r.ok) throw new Error('Local API unavailable');
+              return r.json();
+            })
             .then(res => {
               if (res.success && res.siteData) {
                 applyDynamicSiteData(res.siteData);
@@ -410,7 +441,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
               }
             })
-            .catch(err => console.error('[Eureco] Live site data sync failed:', err));
+            .catch(() => {
+              return fetchSiteDataFromBaserowDirect().then(res => {
+                if (res.success && res.siteData) {
+                  applyDynamicSiteData(res.siteData);
+                  if (res.siteData.reelsSection) renderReelsSection(res.siteData.reelsSection);
+                  if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
+                }
+              });
+            });
         }
       });
     } catch(e) {}

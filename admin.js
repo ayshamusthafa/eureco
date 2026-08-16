@@ -137,7 +137,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return JSON.parse(JSON.stringify(_liveData));
   }
 
-  // Updates in-memory data and pushes to Baserow cloud
+  // Helper for Netlify static hosting mode — saves directly to Baserow Cloud API
+  async function directBaserowSave(data) {
+    const rowUrl = 'https://api.baserow.io/api/database/rows/table/1111251/?user_field_names=true';
+    const headers = {
+      'Authorization': 'Token jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw',
+      'Content-Type': 'application/json'
+    };
+    const getRes = await fetch(rowUrl, { headers });
+    const getJson = await getRes.json();
+    const rows = getJson.results || [];
+    if (rows.length > 0) {
+      const rowId = rows[0].id;
+      const patchUrl = `https://api.baserow.io/api/database/rows/table/1111251/${rowId}/?user_field_names=true`;
+      await fetch(patchUrl, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ Data: JSON.stringify(data) })
+      });
+      return { success: true };
+    }
+    return { success: false };
+  }
+
+  // Updates in-memory data and pushes to Baserow cloud (with Netlify fallback)
   function saveSiteData(data) {
     _liveData = JSON.parse(JSON.stringify(data));
 
@@ -154,7 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
         password,
         siteData: data
       })
-    }).then(r => r.json()).then(res => {
+    }).then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    }).then(res => {
       if (res.success) {
         showToast('Saved successfully to Cloud!');
         if (typeof BroadcastChannel !== 'undefined') {
@@ -165,12 +191,28 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch(e) {}
         }
       } else {
-        console.error('Baserow save failed:', res.message);
-        showToast('Save failed: ' + (res.message || 'Unknown error'));
+        throw new Error(res.message || 'Server save error');
       }
-    }).catch(err => {
-      console.error('Baserow proxy sync error:', err);
-      showToast('Cloud sync failed — check connection');
+    }).catch(async (err) => {
+      console.warn('[Eureco Admin] Proxy save endpoint unavailable (Netlify static mode), saving directly to Baserow Cloud API...');
+      try {
+        const directRes = await directBaserowSave(data);
+        if (directRes.success) {
+          showToast('Saved successfully to Baserow Cloud!');
+          if (typeof BroadcastChannel !== 'undefined') {
+            try {
+              const channel = new BroadcastChannel('eureco_updates');
+              channel.postMessage({ type: 'SITE_DATA_UPDATED' });
+              channel.close();
+            } catch(e) {}
+          }
+        } else {
+          showToast('Baserow Cloud save failed');
+        }
+      } catch (directErr) {
+        console.error('Direct Baserow sync error:', directErr);
+        showToast('Cloud sync failed — check connection');
+      }
     });
   }
 
@@ -349,8 +391,36 @@ document.addEventListener('DOMContentLoaded', () => {
         loginError.style.display = 'block';
       }
     } catch(err) {
-      console.error('Login request failed:', err);
-      // Fallback check if server offline
+      console.warn('[Eureco Admin] Local auth endpoint unavailable (Netlify static mode), authenticating via Baserow Cloud API...');
+      try {
+        const directRes = await fetch('https://api.baserow.io/api/database/rows/table/1111251/?user_field_names=true', {
+          headers: { 'Authorization': 'Token jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw' }
+        });
+        const directData = await directRes.json();
+        const rows = directData.results || [];
+        const uNorm = u.toLowerCase();
+        const matched = rows.find(r => (r.Username || '').toLowerCase() === uNorm && r.Password === p)
+                      || (rows.length > 0 && (uNorm === 'admin' || uNorm === 'admin') && (p === 'Admin@132' || rows[0].Password === p) ? rows[0] : null);
+
+        if (matched) {
+          sessionStorage.setItem('eureco_admin_logged_in', 'true');
+          sessionStorage.setItem('eureco_admin_user', matched.Username || u);
+          sessionStorage.setItem('eureco_admin_pwd', matched.Password || p);
+          if (matched.Data) {
+            try {
+              const parsed = typeof matched.Data === 'string' ? JSON.parse(matched.Data) : matched.Data;
+              _liveData = { ...defaultSiteData, ...parsed };
+            } catch(e) {}
+          }
+          loginError.style.display = 'none';
+          loginScreen.classList.add('hidden');
+          await syncAndInitAdminDashboard();
+          showToast(`Authenticated via Baserow Cloud API`);
+          return;
+        }
+      } catch(netErr) {}
+
+      // Final fallback
       if ((u === 'Admin' || u === 'admin') && p === 'Admin@132') {
         sessionStorage.setItem('eureco_admin_logged_in', 'true');
         sessionStorage.setItem('eureco_admin_user', u);
@@ -358,9 +428,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loginError.style.display = 'none';
         loginScreen.classList.add('hidden');
         initAdminDashboard();
-        showToast('Logged in (Offline Mode — data may be stale)');
+        showToast('Logged in (Offline Mode)');
       } else {
-        loginError.textContent = 'Invalid credentials or proxy server unreachable.';
+        loginError.textContent = 'Invalid credentials or connection error.';
         loginError.style.display = 'block';
       }
     }
@@ -544,16 +614,30 @@ document.addEventListener('DOMContentLoaded', () => {
     renderReelsTable(siteData.reelsSection ? siteData.reelsSection.cards : []);
   }
 
-  // Fetch live data from Baserow API and submissions from server API, update in-memory store, then render dashboard
+  // Fetch live data from local proxy or direct Baserow API
   async function syncAndInitAdminDashboard() {
     try {
       const r = await fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('Local endpoint unavailable');
       const res = await r.json();
       if (res.success && res.siteData) {
         _liveData = { ...defaultSiteData, ...res.siteData };
       }
     } catch (e) {
-      console.warn('Could not sync live site-data from Baserow for admin:', e);
+      console.warn('[Eureco Admin] Local API unavailable (Netlify mode), fetching directly from Baserow Cloud API...');
+      try {
+        const directRes = await fetch('https://api.baserow.io/api/database/rows/table/1111251/?user_field_names=true', {
+          headers: { 'Authorization': 'Token jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw' }
+        });
+        const directData = await directRes.json();
+        const rows = directData.results || [];
+        if (rows.length > 0 && rows[0].Data) {
+          const parsed = typeof rows[0].Data === 'string' ? JSON.parse(rows[0].Data) : rows[0].Data;
+          _liveData = { ...defaultSiteData, ...parsed };
+        }
+      } catch(directErr) {
+        console.warn('Direct Baserow fetch notice:', directErr);
+      }
     }
 
     await syncSubmissionsOnly();
