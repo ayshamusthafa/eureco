@@ -389,19 +389,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Post submission to server API
+      const submissionObj = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        name,
+        email,
+        phone: phone || 'N/A',
+        service: selectedServices.join(', '),
+        message: `Phone: ${phone || 'N/A'} | Inquiry for ${selectedServices.join(', ')}`
+      };
+
+      // Post submission to local server API or fallback to direct Baserow Cloud API
       fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          phone: phone || 'N/A',
-          service: selectedServices.join(', '),
-          message: `Phone: ${phone || 'N/A'} | Inquiry for ${selectedServices.join(', ')}`
-        })
+        body: JSON.stringify(submissionObj)
       })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('Local contact API unavailable');
+        return r.json();
+      })
       .then(res => {
         if (res.success && typeof BroadcastChannel !== 'undefined') {
           try {
@@ -411,7 +418,44 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch(e) {}
         }
       })
-      .catch(err => console.error('Contact submission error:', err));
+      .catch(async (err) => {
+        console.warn('[Eureco] Proxy contact API unavailable (Netlify static mode), submitting directly to Baserow Cloud API...');
+        try {
+          const rowUrl = 'https://api.baserow.io/api/database/rows/table/1111251/?user_field_names=true';
+          const headers = {
+            'Authorization': 'Token jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw',
+            'Content-Type': 'application/json'
+          };
+          const getRes = await fetch(rowUrl, { headers });
+          const getJson = await getRes.json();
+          const rows = getJson.results || [];
+          if (rows.length > 0) {
+            const rowId = rows[0].id;
+            let siteData = {};
+            try {
+              siteData = typeof rows[0].Data === 'string' ? JSON.parse(rows[0].Data) : (rows[0].Data || {});
+            } catch(e) {}
+            siteData.submissions = siteData.submissions || [];
+            siteData.submissions.unshift(submissionObj);
+            const patchUrl = `https://api.baserow.io/api/database/rows/table/1111251/${rowId}/?user_field_names=true`;
+            await fetch(patchUrl, {
+              method: 'PATCH',
+              headers,
+              body: JSON.stringify({ Data: JSON.stringify(siteData) })
+            });
+
+            if (typeof BroadcastChannel !== 'undefined') {
+              try {
+                const channel = new BroadcastChannel('eureco_updates');
+                channel.postMessage({ type: 'NEW_SUBMISSION', submission: submissionObj });
+                channel.close();
+              } catch(e) {}
+            }
+          }
+        } catch (directErr) {
+          console.error('Direct Baserow contact submission error:', directErr);
+        }
+      });
 
       // Success animation
       submitBtn.textContent = 'SENT ✓';

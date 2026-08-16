@@ -647,17 +647,21 @@ document.addEventListener('DOMContentLoaded', () => {
   async function syncSubmissionsOnly() {
     try {
       const r = await fetch(`/api/contact/submissions?t=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('Local submissions API unavailable');
       const res = await r.json();
       if (res.success && Array.isArray(res.submissions)) {
         _submissions = res.submissions;
-        renderRecentSubmissions(_submissions);
-        renderAllSubmissionsTable(_submissions);
-        const subCountEl = document.getElementById('dashSubmissionsCount');
-        if (subCountEl) subCountEl.textContent = _submissions.length;
       }
     } catch (e) {
-      console.warn('Could not fetch contact submissions from server:', e);
+      if (_liveData && Array.isArray(_liveData.submissions)) {
+        _submissions = _liveData.submissions;
+      }
     }
+
+    renderRecentSubmissions(_submissions);
+    renderAllSubmissionsTable(_submissions);
+    const subCountEl = document.getElementById('dashSubmissionsCount');
+    if (subCountEl) subCountEl.textContent = _submissions.length;
   }
 
   syncAndInitAdminDashboard();
@@ -1048,34 +1052,48 @@ document.addEventListener('DOMContentLoaded', () => {
   window.deleteSubmission = async function(idx) {
     try {
       const res = await fetch(`/api/contact/submissions/${idx}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Local delete unavailable');
       const data = await res.json();
       if (data.success) {
         showToast('Submission deleted');
         await syncAndInitAdminDashboard();
-      } else {
-        showToast('Failed to delete submission: ' + (data.message || 'Error'));
+        return;
       }
     } catch (err) {
-      console.error('Delete submission error:', err);
-      showToast('Error connecting to server to delete submission');
+      if (_liveData && Array.isArray(_liveData.submissions)) {
+        _liveData.submissions.splice(idx, 1);
+        _submissions = _liveData.submissions;
+        saveSiteData(_liveData);
+        showToast('Submission deleted');
+        initAdminDashboard();
+        return;
+      }
     }
+    showToast('Failed to delete submission');
   };
 
   window.clearAllSubmissions = async function() {
     if (!confirm('Are you sure you want to delete ALL contact submissions?')) return;
     try {
       const res = await fetch('/api/contact/submissions', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Local clear unavailable');
       const data = await res.json();
       if (data.success) {
         showToast('All submissions cleared');
         await syncAndInitAdminDashboard();
-      } else {
-        showToast('Failed to clear submissions: ' + (data.message || 'Error'));
+        return;
       }
     } catch (err) {
-      console.error('Clear submissions error:', err);
-      showToast('Error connecting to server to clear submissions');
+      if (_liveData) {
+        _liveData.submissions = [];
+        _submissions = [];
+        saveSiteData(_liveData);
+        showToast('All submissions cleared');
+        initAdminDashboard();
+        return;
+      }
     }
+    showToast('Failed to clear submissions');
   };
 
   // ============================================================
