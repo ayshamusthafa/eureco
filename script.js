@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggle = document.getElementById('themeToggle');
   const html = document.documentElement;
 
-  // Load saved theme or default to dark
-  const savedTheme = localStorage.getItem('eureco-theme') || 'dark';
+  // Load saved theme or default to light
+  const savedTheme = localStorage.getItem('eureco-theme') || 'light';
   html.setAttribute('data-theme', savedTheme);
 
   if (themeToggle) {
