@@ -657,12 +657,23 @@ button {
 }
 
 .stat-brand {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
 }
+
+.stat-brand-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  transition: filter 0.4s ease;
+}
+
+.stat-brand .logo-light { display: none; }
+.stat-brand .logo-dark { display: block; }
+[data-theme="dark"] .stat-brand .logo-light { display: block; filter: brightness(10); }
+[data-theme="dark"] .stat-brand .logo-dark { display: none; }
 
 .stat-brand-desc {
   font-size: 0.8rem;
