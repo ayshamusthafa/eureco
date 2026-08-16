@@ -65,18 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 80);
 
-  // Fetch live site payload from Baserow Proxy on page start (while loader is active)
+  // Fetch live site payload from Baserow API on page start (while loader is active)
   fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
     .then(r => r.json())
     .then(res => {
       if (res.success && res.siteData) {
-        localStorage.setItem('eureco_site_data', JSON.stringify(res.siteData));
-        applyDynamicSiteData();
+        // Pass data directly to hydrator — no localStorage involved
+        applyDynamicSiteData(res.siteData);
         if (res.siteData.reelsSection) renderReelsSection(res.siteData.reelsSection);
         if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
       }
     })
-    .catch(err => console.warn('Could not fetch remote site-data from Baserow proxy:', err))
+    .catch(err => console.error('[Eureco] Failed to fetch site data from Baserow API:', err))
     .finally(() => {
       // Data loaded and applied to DOM -> complete preloader smoothly
       clearInterval(progressInterval);
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Save Contact Form Submission into localStorage for Admin Panel
+  // Submit Contact Form to server API
   if (submitBtn) {
     submitBtn.addEventListener('click', () => {
       const name = nameInput ? nameInput.value.trim() : '';
@@ -359,22 +359,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Save submission entry to localStorage
-      try {
-        const raw = localStorage.getItem('eureco_contact_submissions');
-        const submissions = raw ? JSON.parse(raw) : [];
-        submissions.unshift({
-          date: new Date().toLocaleString(),
-          name: name,
-          email: email,
+      // Post submission to server API
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
           phone: phone || 'N/A',
           service: selectedServices.join(', '),
           message: `Phone: ${phone || 'N/A'} | Inquiry for ${selectedServices.join(', ')}`
-        });
-        localStorage.setItem('eureco_contact_submissions', JSON.stringify(submissions));
-      } catch(e) {
-        console.error('Error saving submission:', e);
-      }
+        })
+      }).catch(err => console.error('Contact submission error:', err));
 
       // Success animation
       submitBtn.textContent = 'SENT ✓';
@@ -386,12 +382,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============================================================
   // DYNAMIC CMS SITE DATA HYDRATOR
+  // Accepts data directly from the Baserow API fetch response.
+  // Does NOT read from localStorage.
   // ============================================================
-  function applyDynamicSiteData() {
-    const raw = localStorage.getItem('eureco_site_data');
-    if (!raw) return;
+  function applyDynamicSiteData(data) {
+    if (!data || typeof data !== 'object') return;
     try {
-      const data = JSON.parse(raw);
 
       // Title & Favicon
       if (data.siteTitle) document.title = data.siteTitle;
@@ -668,13 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Apply initially and listen for instant live updates across tabs/windows
-  applyDynamicSiteData();
-
-  window.addEventListener('storage', () => {
-    applyDynamicSiteData();
-  });
-
   // ============================================================
   // SMOOTH SCROLL for anchor links
   // ============================================================
@@ -931,40 +920,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: false });
   }
 
-  // Initial render on page load
-  (function initTeamCarousel() {
-    const raw = localStorage.getItem('eureco_site_data');
-    let data;
-    if (raw) {
-      try { data = JSON.parse(raw); } catch(e) { data = null; }
-    }
-
-    // Seed default team if not present
-    if (!data || !data.team || data.team.length === 0) {
-      const defaultTeam = [
-        { name: 'Nisam VM', role: 'CEO', image: '', gradient: 'linear-gradient(135deg, #FF2E93, #FF0040)' },
-        { name: 'Shirin', role: 'SMM Head', image: '', gradient: 'linear-gradient(135deg, #FF6B35, #FF2E93)' },
-        { name: 'Fidha Sabrina', role: 'HR', image: '', gradient: 'linear-gradient(135deg, #FF00FF, #FF2E93)' },
-        { name: 'Youthika', role: 'Performance', image: '', gradient: 'linear-gradient(135deg, #FF0040, #FF6B35)' },
-        { name: 'Thasleem', role: 'Co-Founder', image: '', gradient: 'linear-gradient(135deg, #4A00E0, #7B2FBE)' },
-        { name: 'Amal', role: 'Creative Head', image: '', gradient: 'linear-gradient(135deg, #9B30FF, #4A00E0)' },
-        { name: 'Rashid', role: 'Developer', image: '', gradient: 'linear-gradient(135deg, #00D2FF, #3D6CAE)' },
-        { name: 'Fathima', role: 'Content Lead', image: '', gradient: 'linear-gradient(135deg, #FF8C00, #FFD700)' }
-      ];
-      if (data) {
-        data.team = defaultTeam;
-        localStorage.setItem('eureco_site_data', JSON.stringify(data));
-      } else {
-        data = { team: defaultTeam };
-      }
-    }
-
-    if (data && data.team && data.team.length > 0) {
-      renderTeamCarousel(data.team);
-      const countEl = document.getElementById('teamMemberCount');
-      if (countEl) countEl.textContent = data.team.length + ' MEMBERS';
-    }
-  })();
+  // Team carousel initial render is handled by the Baserow fetch chain above
+  // (renderTeamCarousel is called from the fetch .then() block with live data)
 
   // ============================================================
   // INSTAGRAM REELS SECTION RENDERER
@@ -1076,37 +1033,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function initReelsSection() {
-    const raw = localStorage.getItem('eureco_site_data');
-    let data;
-    if (raw) {
-      try { data = JSON.parse(raw); } catch(e) { data = null; }
-    }
-
-    if (!data) {
-      data = { reelsSection: defaultReelsData, hiddenContainers: { reels: false } };
-      localStorage.setItem('eureco_site_data', JSON.stringify(data));
-    } else if (!data.reelsSection) {
-      data.reelsSection = defaultReelsData;
-      localStorage.setItem('eureco_site_data', JSON.stringify(data));
-    }
-
-    renderReelsSection(data.reelsSection);
-  }
-
-  initReelsSection();
-
-  // Listen for storage events (live sync from Admin Panel)
-  window.addEventListener('storage', () => {
-    applyDynamicSiteData();
-    const raw = localStorage.getItem('eureco_site_data');
-    if (raw) {
-      try {
-        const data = JSON.parse(raw);
-        if (data.reelsSection) renderReelsSection(data.reelsSection);
-      } catch(e) {}
-    }
-  });
+  // Reels section initial render is handled by the Baserow fetch chain above
+  // (renderReelsSection is called from the fetch .then() block with live data)
+  // Render defaults immediately so the section is not empty during fetch
+  renderReelsSection(defaultReelsData);
 
 });
 

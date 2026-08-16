@@ -1,5 +1,10 @@
 /* ============================================================
    EURECO PORTFOLIO — ADMIN CONTROL PANEL LOGIC
+   ============================================================
+   DATA FLOW:
+     On login/page-load → fetch /api/site-data from Baserow → store in _liveData (memory)
+     On any edit/save    → update _liveData → PATCH to Baserow via /api/admin/save
+     localStorage is NEVER used for site data reads/writes.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -115,18 +120,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Helper functions for localStorage & form data
+  // ============================================================
+  // IN-MEMORY LIVE DATA (single source of truth — NOT localStorage)
+  // ============================================================
+  let _liveData = JSON.parse(JSON.stringify(defaultSiteData));
+
+  // Returns current in-memory site data (never reads localStorage)
   function getSiteData() {
-    const raw = localStorage.getItem('eureco_site_data');
-    if (!raw) {
-      localStorage.setItem('eureco_site_data', JSON.stringify(defaultSiteData));
-      return defaultSiteData;
-    }
-    try {
-      return { ...defaultSiteData, ...JSON.parse(raw) };
-    } catch(e) {
-      return defaultSiteData;
-    }
+    return JSON.parse(JSON.stringify(_liveData));
+  }
+
+  // Updates in-memory data and pushes to Baserow cloud
+  function saveSiteData(data) {
+    _liveData = JSON.parse(JSON.stringify(data));
+
+    const username = sessionStorage.getItem('eureco_admin_user') || 'Admin';
+    const password = sessionStorage.getItem('eureco_admin_pwd') || 'Admin@132';
+
+    showToast('Saving...');
+
+    fetch('/api/admin/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username,
+        password,
+        siteData: data
+      })
+    }).then(r => r.json()).then(res => {
+      if (res.success) {
+        showToast('Saved successfully to Cloud!');
+      } else {
+        console.error('Baserow save failed:', res.message);
+        showToast('Save failed: ' + (res.message || 'Unknown error'));
+      }
+    }).catch(err => {
+      console.error('Baserow proxy sync error:', err);
+      showToast('Cloud sync failed — check connection');
+    });
   }
 
   function collectAllAdminFormData() {
@@ -220,30 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return siteData;
   }
 
-  function saveSiteData(data) {
-    localStorage.setItem('eureco_site_data', JSON.stringify(data));
-    window.dispatchEvent(new Event('storage'));
-
-    const username = sessionStorage.getItem('eureco_admin_user') || 'Admin';
-    const password = sessionStorage.getItem('eureco_admin_pwd') || 'Admin@132';
-
-    // Push encrypted payload to Baserow Proxy
-    fetch('/api/admin/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username,
-        password,
-        siteData: data
-      })
-    }).then(r => r.json()).then(res => {
-      showToast('Global Settings updated');
-    }).catch(err => {
-      console.warn('Baserow proxy sync error:', err);
-      showToast('Global Settings updated');
-    });
-  }
-
   function getSubmissions() {
     const raw = localStorage.getItem('eureco_contact_submissions');
     if (!raw) return [];
@@ -306,13 +313,14 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('eureco_admin_user', data.username || u);
         sessionStorage.setItem('eureco_admin_pwd', data.password || p);
 
+        // Store login response data into memory (not localStorage)
         if (data.siteData) {
-          localStorage.setItem('eureco_site_data', JSON.stringify(data.siteData));
+          _liveData = { ...defaultSiteData, ...data.siteData };
         }
 
         loginError.style.display = 'none';
         loginScreen.classList.add('hidden');
-        syncAndInitAdminDashboard();
+        await syncAndInitAdminDashboard();
         showToast(`Authenticated as ${data.username || u} via Baserow!`);
       } else {
         loginError.textContent = data.message || 'Authentication failed.';
@@ -321,15 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(err) {
       console.error('Login request failed:', err);
       // Fallback check if server offline
-      const siteData = getSiteData();
       if ((u === 'Admin' || u === 'admin') && p === 'Admin@132') {
         sessionStorage.setItem('eureco_admin_logged_in', 'true');
         sessionStorage.setItem('eureco_admin_user', u);
         sessionStorage.setItem('eureco_admin_pwd', p);
         loginError.style.display = 'none';
         loginScreen.classList.add('hidden');
-        syncAndInitAdminDashboard();
-        showToast('Logged in (Local Mode)');
+        initAdminDashboard();
+        showToast('Logged in (Offline Mode — data may be stale)');
       } else {
         loginError.textContent = 'Invalid credentials or proxy server unreachable.';
         loginError.style.display = 'block';
@@ -354,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Theme Toggle for Admin
+  // Theme Toggle for Admin (theme preference is OK in localStorage — it's cosmetic/device-specific)
   const adminThemeToggle = document.getElementById('adminThemeToggle');
   const html = document.documentElement;
   const savedTheme = localStorage.getItem('eureco-theme') || 'dark';
@@ -504,15 +511,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderReelsTable(siteData.reelsSection ? siteData.reelsSection.cards : []);
   }
 
+  // Fetch live data from Baserow API, update in-memory store, then render dashboard
   async function syncAndInitAdminDashboard() {
     try {
       const r = await fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' });
       const res = await r.json();
       if (res.success && res.siteData) {
-        localStorage.setItem('eureco_site_data', JSON.stringify(res.siteData));
+        _liveData = { ...defaultSiteData, ...res.siteData };
       }
     } catch (e) {
-      console.warn('Could not sync live site-data for admin:', e);
+      console.warn('Could not sync live site-data from Baserow for admin:', e);
     }
     initAdminDashboard();
   }
