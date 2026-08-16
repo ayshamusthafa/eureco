@@ -489,30 +489,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.switchTab = function(tabId) {
     navItems.forEach(item => {
-      if (item.getAttribute('data-tab') === tabId) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
+      item.classList.toggle('active', item.getAttribute('data-tab') === tabId);
+    });
+
+    const mobileNavItems = document.querySelectorAll('.admin-mobile-nav-item');
+    mobileNavItems.forEach(mItem => {
+      mItem.classList.toggle('active', mItem.getAttribute('data-tab') === tabId);
     });
 
     tabContents.forEach(content => {
-      if (content.id === `tab-${tabId}`) {
-        content.classList.add('active');
-      } else {
-        content.classList.remove('active');
-      }
+      content.classList.toggle('active', content.id === `tab-${tabId}`);
     });
 
     if (tabHeaderTitle && tabTitles[tabId]) {
       tabHeaderTitle.textContent = tabTitles[tabId];
     }
+
+    // Close mobile drawer on tab switch
+    const sidebar = document.querySelector('.admin-sidebar');
+    const overlay = document.getElementById('adminDrawerOverlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
   };
 
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
       const tabId = item.getAttribute('data-tab');
+      switchTab(tabId);
+      if (tabId === 'submissions' || tabId === 'dashboard') {
+        syncSubmissionsOnly();
+      }
+    });
+  });
+
+  // Mobile App Navigation Handlers
+  const mobileMenuBtn = document.getElementById('adminMobileMenuToggle');
+  const drawerOverlay = document.getElementById('adminDrawerOverlay');
+  const adminSidebar = document.querySelector('.admin-sidebar');
+
+  if (mobileMenuBtn && adminSidebar) {
+    mobileMenuBtn.addEventListener('click', () => {
+      adminSidebar.classList.toggle('open');
+      if (drawerOverlay) drawerOverlay.classList.toggle('active');
+    });
+  }
+
+  if (drawerOverlay && adminSidebar) {
+    drawerOverlay.addEventListener('click', () => {
+      adminSidebar.classList.remove('open');
+      drawerOverlay.classList.remove('active');
+    });
+  }
+
+  const mobileNavItems = document.querySelectorAll('.admin-mobile-nav-item');
+  mobileNavItems.forEach(mItem => {
+    mItem.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tabId = mItem.getAttribute('data-tab');
       switchTab(tabId);
       if (tabId === 'submissions' || tabId === 'dashboard') {
         syncSubmissionsOnly();
