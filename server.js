@@ -261,6 +261,9 @@ function findMatchedRow(rows, username, password) {
 
 // 1. PUBLIC ENDPOINT: Get site data for preloader/hydration
 app.get('/api/site-data', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
     const rows = await getBaserowRows();
     if (!rows || rows.length === 0) {

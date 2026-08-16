@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.style.overflow = 'hidden';
   
   // Fetch live site payload from Baserow Proxy on page start
-  fetch('/api/site-data')
+  fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
     .then(r => r.json())
     .then(res => {
       if (res.success && res.siteData) {

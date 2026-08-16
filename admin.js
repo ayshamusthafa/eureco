@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loginError.style.display = 'none';
         loginScreen.classList.add('hidden');
-        initAdminDashboard();
+        syncAndInitAdminDashboard();
         showToast(`Authenticated as ${data.username || u} via Baserow!`);
       } else {
         loginError.textContent = data.message || 'Authentication failed.';
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('eureco_admin_pwd', p);
         loginError.style.display = 'none';
         loginScreen.classList.add('hidden');
-        initAdminDashboard();
+        syncAndInitAdminDashboard();
         showToast('Logged in (Local Mode)');
       } else {
         loginError.textContent = 'Invalid credentials or proxy server unreachable.';
@@ -504,7 +504,20 @@ document.addEventListener('DOMContentLoaded', () => {
     renderReelsTable(siteData.reelsSection ? siteData.reelsSection.cards : []);
   }
 
-  initAdminDashboard();
+  async function syncAndInitAdminDashboard() {
+    try {
+      const r = await fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await r.json();
+      if (res.success && res.siteData) {
+        localStorage.setItem('eureco_site_data', JSON.stringify(res.siteData));
+      }
+    } catch (e) {
+      console.warn('Could not sync live site-data for admin:', e);
+    }
+    initAdminDashboard();
+  }
+
+  syncAndInitAdminDashboard();
 
   // ============================================================
   // CONTAINERS VISIBILITY TOGGLES
