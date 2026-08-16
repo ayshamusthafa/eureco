@@ -457,12 +457,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Success animation
+      // Clear all form inputs
+      if (nameInput) nameInput.value = '';
+      if (emailInput) emailInput.value = '';
+      if (phoneInput) phoneInput.value = '';
+      document.querySelectorAll('.form-service-tag.active').forEach(tag => tag.classList.remove('active'));
+
+      // Show success modal overlay
+      showContactSuccessModal(name, selectedServices);
+
+      // Success button state
       submitBtn.textContent = 'SENT ✓';
       submitBtn.style.background = '#3D6CAE';
       submitBtn.style.borderColor = '#3D6CAE';
       submitBtn.style.color = '#FFFFFF';
+      setTimeout(() => {
+        submitBtn.textContent = 'SEND ENQUIRY';
+        submitBtn.style.background = '';
+        submitBtn.style.borderColor = '';
+        submitBtn.style.color = '';
+      }, 3000);
     });
+  }
+
+  // Contact Success Modal Handler
+  function showContactSuccessModal(name, services) {
+    const modal = document.getElementById('contactSuccessModal');
+    const msgEl = document.getElementById('contactModalText');
+    if (!modal) return;
+
+    const serviceStr = services && services.length ? services.join(', ') : 'our services';
+    if (msgEl) {
+      msgEl.textContent = `Thank you, ${name}! Your inquiry for ${serviceStr} has been received. Our team will get back to you shortly.`;
+    }
+    modal.classList.add('active');
+
+    const closeBtn = document.getElementById('contactModalClose');
+    const actionBtn = document.getElementById('contactModalBtn');
+
+    function closeModal() {
+      modal.classList.remove('active');
+    }
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (actionBtn) actionBtn.onclick = closeModal;
+    modal.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
   }
 
   // ============================================================
