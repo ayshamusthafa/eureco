@@ -16,6 +16,9 @@ const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://api.baserow.io/a
 const BASEROW_TABLE_ID = process.env.BASEROW_TABLE_ID || '1111251';
 const BASEROW_API_KEY = process.env.BASEROW_API_KEY || 'jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw';
 
+// Deterministic Master Secret Key for Site Payload Encryption across all devices
+const MASTER_ENCRYPTION_SECRET = process.env.MASTER_ENCRYPTION_SECRET || 'EURECO_GLOBAL_MASTER_KEY_2026';
+
 // In-memory submissions cache for server persistence
 let localContactSubmissions = [];
 
@@ -129,13 +132,13 @@ const defaultSiteData = {
 // ============================================================
 // AES-256-CBC ENCRYPTION HELPERS
 // ============================================================
-function getKey(password) {
-  return crypto.createHash('sha256').update(String(password)).digest();
+function getKey(secretKey) {
+  return crypto.createHash('sha256').update(String(secretKey)).digest();
 }
 
-function encryptPayload(dataObject, password) {
+function encryptPayload(dataObject, secretKey = MASTER_ENCRYPTION_SECRET) {
   try {
-    const key = getKey(password);
+    const key = getKey(secretKey);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
     const jsonStr = JSON.stringify(dataObject);
@@ -148,22 +151,38 @@ function encryptPayload(dataObject, password) {
   }
 }
 
-function decryptPayload(encryptedString, password) {
+function decryptPayload(encryptedString, primarySecret = MASTER_ENCRYPTION_SECRET) {
   if (!encryptedString || typeof encryptedString !== 'string') return null;
-  try {
-    const parts = encryptedString.split(':');
-    if (parts.length !== 2) return null;
-    const iv = Buffer.from(parts[0], 'hex');
-    const encryptedText = Buffer.from(parts[1], 'hex');
-    const key = getKey(password);
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return JSON.parse(decrypted);
-  } catch (err) {
-    console.error('Decryption error:', err.message);
-    return null;
+
+  // Try primary master secret first, then legacy password keys for backwards compatibility
+  const keysToTry = [
+    primarySecret,
+    'Admin@132',
+    'admin',
+    'Admin',
+    'eureco123'
+  ];
+
+  for (const secretKey of keysToTry) {
+    try {
+      const parts = encryptedString.split(':');
+      if (parts.length !== 2) continue;
+      const iv = Buffer.from(parts[0], 'hex');
+      const encryptedText = Buffer.from(parts[1], 'hex');
+      const key = getKey(secretKey);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      const parsed = JSON.parse(decrypted);
+      if (parsed && typeof parsed === 'object') {
+        return parsed;
+      }
+    } catch (err) {
+      // Try next key in list
+    }
   }
+
+  return null;
 }
 
 // ============================================================
@@ -230,12 +249,21 @@ async function createBaserowRow(payloadString, username = 'Admin', password = 'A
   return await response.json();
 }
 
+async function getPrimaryBaserowRow() {
+  const rows = await getBaserowRows();
+  if (!rows || rows.length === 0) {
+    const encryptedDefault = encryptPayload(defaultSiteData, MASTER_ENCRYPTION_SECRET);
+    const newRow = await createBaserowRow(encryptedDefault, 'Admin', 'Admin@132');
+    return newRow;
+  }
+  return rows[0];
+}
+
 function findMatchedRow(rows, username, password) {
   if (!rows || rows.length === 0) return null;
   const uNorm = String(username || '').trim().toLowerCase();
   const pNorm = String(password || '').trim();
 
-  // Exact or case-insensitive match on Username & Password
   let match = rows.find(r => {
     const rowUser = String(r.Username || '').trim().toLowerCase();
     const rowPass = String(r.Password || '').trim();
@@ -244,7 +272,6 @@ function findMatchedRow(rows, username, password) {
 
   if (match) return match;
 
-  // Fallback: Check if default credentials match single row
   if (rows.length === 1) {
     const rowPass = String(rows[0].Password || 'Admin@132').trim();
     if (pNorm === rowPass || pNorm === 'Admin@132' || uNorm === 'admin') {
@@ -265,31 +292,23 @@ app.get('/api/site-data', async (req, res) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   try {
-    const rows = await getBaserowRows();
-    if (!rows || rows.length === 0) {
-      return res.json({ success: true, siteData: defaultSiteData });
-    }
-
-    for (const row of rows) {
-      if (row.Data && row.Data.trim().length > 0) {
-        const passwordKey = row.Password || 'Admin@132';
-        const decrypted = decryptPayload(row.Data, passwordKey);
-        if (decrypted && typeof decrypted === 'object') {
-          const mergedData = {
-            ...defaultSiteData,
-            ...decrypted,
-            hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(decrypted.hiddenContainers || {}) },
-            hero: { ...defaultSiteData.hero, ...(decrypted.hero || {}) },
-            footer: { ...defaultSiteData.footer, ...(decrypted.footer || {}) },
-            reelsSection: { ...defaultSiteData.reelsSection, ...(decrypted.reelsSection || {}) },
-            config404: { ...defaultSiteData.config404, ...(decrypted.config404 || {}) }
-          };
-          return res.json({ success: true, siteData: mergedData });
-        }
+    const row = await getPrimaryBaserowRow();
+    if (row && row.Data && row.Data.trim().length > 0) {
+      const decrypted = decryptPayload(row.Data, MASTER_ENCRYPTION_SECRET);
+      if (decrypted && typeof decrypted === 'object') {
+        const mergedData = {
+          ...defaultSiteData,
+          ...decrypted,
+          hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(decrypted.hiddenContainers || {}) },
+          hero: { ...defaultSiteData.hero, ...(decrypted.hero || {}) },
+          footer: { ...defaultSiteData.footer, ...(decrypted.footer || {}) },
+          reelsSection: { ...defaultSiteData.reelsSection, ...(decrypted.reelsSection || {}) },
+          config404: { ...defaultSiteData.config404, ...(decrypted.config404 || {}) }
+        };
+        return res.json({ success: true, siteData: mergedData });
       }
     }
 
-    // Fallback to default site data if empty or unencrypted
     return res.json({ success: true, siteData: defaultSiteData });
   } catch (err) {
     console.error('Error fetching site data:', err);
@@ -308,12 +327,9 @@ app.post('/api/admin/login', async (req, res) => {
     const rows = await getBaserowRows();
     let matchedRow = findMatchedRow(rows, username, password);
 
-    // If no row exists, initialize the table with a new row
     if (!matchedRow && rows.length === 0) {
-      const encryptedDefault = encryptPayload(defaultSiteData, password);
-      if (encryptedDefault) {
-        matchedRow = await createBaserowRow(encryptedDefault, username, password);
-      }
+      const encryptedDefault = encryptPayload(defaultSiteData, MASTER_ENCRYPTION_SECRET);
+      matchedRow = await createBaserowRow(encryptedDefault, username, password);
     }
 
     if (!matchedRow) {
@@ -322,13 +338,12 @@ app.post('/api/admin/login', async (req, res) => {
 
     let siteData = defaultSiteData;
     if (matchedRow.Data && matchedRow.Data.trim().length > 0) {
-      const decrypted = decryptPayload(matchedRow.Data, password);
+      const decrypted = decryptPayload(matchedRow.Data, MASTER_ENCRYPTION_SECRET);
       if (decrypted) {
         siteData = decrypted;
       }
     } else {
-      // Initialize row with encrypted default site data
-      const encryptedDefault = encryptPayload(defaultSiteData, password);
+      const encryptedDefault = encryptPayload(defaultSiteData, MASTER_ENCRYPTION_SECRET);
       if (encryptedDefault && matchedRow.id) {
         await updateBaserowRow(matchedRow.id, encryptedDefault);
       }
@@ -358,22 +373,15 @@ app.post('/api/admin/save', async (req, res) => {
   }
 
   try {
-    const rows = await getBaserowRows();
-    const matchedRow = findMatchedRow(rows, username, password);
+    const row = await getPrimaryBaserowRow();
 
-    const encryptedPayload = encryptPayload(siteData, password);
+    // Encrypt payload using deterministic master encryption secret
+    const encryptedPayload = encryptPayload(siteData, MASTER_ENCRYPTION_SECRET);
     if (!encryptedPayload) {
       return res.status(500).json({ success: false, message: 'Failed to encrypt site payload' });
     }
 
-    if (matchedRow) {
-      await updateBaserowRow(matchedRow.id, encryptedPayload);
-    } else if (rows.length === 0) {
-      await createBaserowRow(encryptedPayload, username, password);
-    } else {
-      // Update first row if table exists
-      await updateBaserowRow(rows[0].id, encryptedPayload);
-    }
+    await updateBaserowRow(row.id, encryptedPayload);
 
     res.json({
       success: true,
