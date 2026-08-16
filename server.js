@@ -18,9 +18,11 @@ const BASEROW_TABLE_ID = process.env.BASEROW_TABLE_ID || '1111251';
 const BASEROW_API_KEY = process.env.BASEROW_API_KEY || 'jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw';
 
 // ============================================================
-// CONTACT SUBMISSIONS — Persisted to submissions.json
+// LOCAL PERSISTENCE FILES (sitedata.json & submissions.json)
+// Ensures instant response on page refresh without waiting for Baserow roundtrips.
 // ============================================================
 const SUBMISSIONS_FILE = path.join(__dirname, 'submissions.json');
+const SITEDATA_FILE = path.join(__dirname, 'sitedata.json');
 
 function loadSubmissions() {
   try {
@@ -39,6 +41,27 @@ function saveSubmissionsToFile(subs) {
     fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(subs, null, 2), 'utf8');
   } catch (e) {
     console.error('Error writing submissions.json:', e.message);
+  }
+}
+
+function loadSiteDataFromFile() {
+  try {
+    if (fs.existsSync(SITEDATA_FILE)) {
+      const raw = fs.readFileSync(SITEDATA_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch (e) {
+    console.error('Error reading sitedata.json:', e.message);
+  }
+  return null;
+}
+
+function saveSiteDataToFile(data) {
+  try {
+    fs.writeFileSync(SITEDATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error writing sitedata.json:', e.message);
   }
 }
 
@@ -149,10 +172,39 @@ const defaultSiteData = {
   }
 };
 
+// In-Memory Live Cache (initialized from disk if present)
+let cachedSiteData = loadSiteDataFromFile() || defaultSiteData;
+
+// Sync cachedSiteData with Baserow Cloud API asynchronously
+async function syncSiteDataFromBaserow() {
+  try {
+    const row = await getPrimaryBaserowRow();
+    const parsed = parseRowData(row.Data);
+    if (parsed) {
+      cachedSiteData = {
+        ...defaultSiteData,
+        ...parsed,
+        hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(parsed.hiddenContainers || {}) },
+        hero: { ...defaultSiteData.hero, ...(parsed.hero || {}) },
+        stats: Array.isArray(parsed.stats) && parsed.stats.length > 0 ? parsed.stats : (cachedSiteData.stats || defaultSiteData.stats),
+        services: Array.isArray(parsed.services) && parsed.services.length > 0 ? parsed.services : (cachedSiteData.services || defaultSiteData.services),
+        projects: Array.isArray(parsed.projects) && parsed.projects.length > 0 ? parsed.projects : (cachedSiteData.projects || defaultSiteData.projects),
+        awards: Array.isArray(parsed.awards) && parsed.awards.length > 0 ? parsed.awards : (cachedSiteData.awards || defaultSiteData.awards),
+        reelsSection: { ...defaultSiteData.reelsSection, ...(parsed.reelsSection || {}) },
+        team: Array.isArray(parsed.team) && parsed.team.length > 0 ? parsed.team : (cachedSiteData.team || defaultSiteData.team),
+        footer: { ...defaultSiteData.footer, ...(parsed.footer || {}) },
+        config404: { ...defaultSiteData.config404, ...(parsed.config404 || {}) }
+      };
+      saveSiteDataToFile(cachedSiteData);
+    }
+  } catch (e) {
+    console.warn('Initial Baserow sync background fetch notice:', e.message);
+  }
+}
+syncSiteDataFromBaserow();
+
 // ============================================================
 // LEGACY DECRYPTION (for migrating old encrypted data)
-// If old encrypted data exists in Baserow, this will read it once
-// and the next save will store it as plain JSON.
 // ============================================================
 function legacyDecrypt(encryptedString) {
   if (!encryptedString || typeof encryptedString !== 'string') return null;
@@ -277,7 +329,6 @@ async function createBaserowRow(payloadString, username = 'Admin', password = 'A
 async function getPrimaryBaserowRow() {
   const rows = await getBaserowRows();
   if (!rows || rows.length === 0) {
-    // Store plain JSON — no encryption
     const plainDefault = JSON.stringify(defaultSiteData);
     const newRow = await createBaserowRow(plainDefault, 'Admin', 'Admin@132');
     return newRow;
@@ -312,32 +363,12 @@ function findMatchedRow(rows, username, password) {
 // API ENDPOINTS
 // ============================================================
 
-// 1. PUBLIC ENDPOINT: Get site data for preloader/hydration
-app.get('/api/site-data', async (req, res) => {
+// 1. PUBLIC ENDPOINT: Get site data — INSTANT response from cache, zero network lag
+app.get('/api/site-data', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  try {
-    const row = await getPrimaryBaserowRow();
-    const parsed = parseRowData(row.Data);
-    if (parsed) {
-      const mergedData = {
-        ...defaultSiteData,
-        ...parsed,
-        hiddenContainers: { ...defaultSiteData.hiddenContainers, ...(parsed.hiddenContainers || {}) },
-        hero: { ...defaultSiteData.hero, ...(parsed.hero || {}) },
-        footer: { ...defaultSiteData.footer, ...(parsed.footer || {}) },
-        reelsSection: { ...defaultSiteData.reelsSection, ...(parsed.reelsSection || {}) },
-        config404: { ...defaultSiteData.config404, ...(parsed.config404 || {}) }
-      };
-      return res.json({ success: true, siteData: mergedData });
-    }
-
-    return res.json({ success: true, siteData: defaultSiteData });
-  } catch (err) {
-    console.error('Error fetching site data:', err);
-    res.status(500).json({ success: false, message: 'Failed to fetch site data from Baserow', siteData: defaultSiteData });
-  }
+  res.json({ success: true, siteData: cachedSiteData });
 });
 
 // 2. ADMIN LOGIN ENDPOINT: Authenticates via Baserow table
@@ -352,7 +383,7 @@ app.post('/api/admin/login', async (req, res) => {
     let matchedRow = findMatchedRow(rows, username, password);
 
     if (!matchedRow && rows.length === 0) {
-      const plainDefault = JSON.stringify(defaultSiteData);
+      const plainDefault = JSON.stringify(cachedSiteData);
       matchedRow = await createBaserowRow(plainDefault, username, password);
     }
 
@@ -360,13 +391,10 @@ app.post('/api/admin/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid username or password' });
     }
 
-    let siteData = defaultSiteData;
     const parsed = parseRowData(matchedRow.Data);
     if (parsed) {
-      siteData = parsed;
-    } else if (matchedRow.id) {
-      // Initialize row with plain JSON default
-      await updateBaserowRow(matchedRow.id, JSON.stringify(defaultSiteData));
+      cachedSiteData = { ...cachedSiteData, ...parsed };
+      saveSiteDataToFile(cachedSiteData);
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -377,7 +405,7 @@ app.post('/api/admin/login', async (req, res) => {
       rowId: matchedRow.id,
       username: matchedRow.Username || username,
       password: matchedRow.Password || password,
-      siteData
+      siteData: cachedSiteData
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -385,7 +413,7 @@ app.post('/api/admin/login', async (req, res) => {
   }
 });
 
-// 3. ADMIN GLOBAL SAVE — stores plain JSON to Baserow (no encryption)
+// 3. ADMIN GLOBAL SAVE — updates memory & file cache INSTANTLY, syncs to Baserow Cloud in background
 app.post('/api/admin/save', async (req, res) => {
   const { username, password, siteData } = req.body;
 
@@ -393,24 +421,27 @@ app.post('/api/admin/save', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Missing parameters for save operation' });
   }
 
+  // Update memory and disk file cache immediately for 0ms refresh speed
+  cachedSiteData = { ...cachedSiteData, ...siteData };
+  saveSiteDataToFile(cachedSiteData);
+
+  // Return success instantly so admin UI doesn't wait
+  res.json({
+    success: true,
+    message: 'Global Settings updated'
+  });
+
+  // Sync to Baserow in background
   try {
     const row = await getPrimaryBaserowRow();
-
-    // Store as plain JSON string — no encryption
-    const plainPayload = JSON.stringify(siteData);
+    const plainPayload = JSON.stringify(cachedSiteData);
     await updateBaserowRow(row.id, plainPayload);
-
-    res.json({
-      success: true,
-      message: 'Global Settings updated'
-    });
   } catch (err) {
-    console.error('Global save error:', err);
-    res.status(500).json({ success: false, message: 'Failed to update Baserow payload: ' + err.message });
+    console.error('Background Baserow update error:', err);
   }
 });
 
-// 4. ADMIN CHANGE PASSWORD — updates the Baserow row's Password column directly
+// 4. ADMIN CHANGE PASSWORD
 app.post('/api/admin/change-password', async (req, res) => {
   const { username, currentPassword, newPassword } = req.body;
 
@@ -435,7 +466,7 @@ app.post('/api/admin/change-password', async (req, res) => {
   }
 });
 
-// 5. CONTACT FORM SUBMISSION ENDPOINT — persisted to submissions.json
+// 5. CONTACT FORM SUBMISSION ENDPOINT
 app.post('/api/contact', (req, res) => {
   const { name, email, phone, service, message } = req.body;
   if (!name || !email) {
@@ -463,7 +494,7 @@ app.post('/api/contact', (req, res) => {
   });
 });
 
-// 6. GET CONTACT SUBMISSIONS — for admin panel
+// 6. GET CONTACT SUBMISSIONS
 app.get('/api/contact/submissions', (req, res) => {
   try {
     const subs = loadSubmissions();

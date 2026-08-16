@@ -183,17 +183,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function animateCounters() {
-    statNumbers.forEach(numEl => {
-      const target = parseInt(numEl.getAttribute('data-target'));
+    const currentStatNumbers = document.querySelectorAll('.stat-number[data-target]');
+    currentStatNumbers.forEach(numEl => {
+      const targetStr = numEl.getAttribute('data-target');
+      const target = parseInt(targetStr, 10);
       const suffix = numEl.getAttribute('data-suffix') || '';
-      const duration = 2000;
+      if (isNaN(target)) {
+        numEl.textContent = targetStr || '';
+        return;
+      }
+      const duration = 1200;
       const startTime = performance.now();
 
       function update(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
-        // Ease-out cubic
         const eased = 1 - Math.pow(1 - progress, 3);
         const current = Math.round(eased * target);
         
@@ -203,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
           requestAnimationFrame(update);
         }
       }
-      
       requestAnimationFrame(update);
     });
   }
@@ -456,12 +459,18 @@ document.addEventListener('DOMContentLoaded', () => {
               if (match) {
                 numEl.setAttribute('data-target', match[1]);
                 numEl.setAttribute('data-suffix', match[2]);
+              } else {
+                numEl.setAttribute('data-target', st.number);
+                numEl.setAttribute('data-suffix', '');
               }
               numEl.textContent = st.number;
             }
             if (labelEl && st.label) labelEl.textContent = st.label;
           }
         });
+        if (statsAnimated) {
+          animateCounters();
+        }
       }
 
       // Hidden Containers & Synchronized Navigation Links (Hero, Services, Projects, Awards, Contact, Footer)
