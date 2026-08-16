@@ -99,12 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('eureco-theme') || 'dark';
   html.setAttribute('data-theme', savedTheme);
 
-  themeToggle.addEventListener('click', () => {
-    const currentTheme = html.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', newTheme);
-    localStorage.setItem('eureco-theme', newTheme);
-  });
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('eureco-theme', newTheme);
+    });
+  }
 
   // ============================================================
   // NAVBAR SCROLL EFFECT
@@ -127,21 +129,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
-  const menuLinks = mobileMenu.querySelectorAll('.menu-link');
 
-  hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    mobileMenu.classList.toggle('open');
-    document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
-  });
+  if (hamburger && mobileMenu) {
+    const menuLinks = mobileMenu.querySelectorAll('.menu-link');
 
-  menuLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      hamburger.classList.remove('active');
-      mobileMenu.classList.remove('open');
-      document.body.style.overflow = '';
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      mobileMenu.classList.toggle('open');
+      document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
     });
-  });
+
+    menuLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+  }
 
   // ============================================================
   // SCROLL REVEAL (Intersection Observer)
@@ -370,7 +375,18 @@ document.addEventListener('DOMContentLoaded', () => {
           service: selectedServices.join(', '),
           message: `Phone: ${phone || 'N/A'} | Inquiry for ${selectedServices.join(', ')}`
         })
-      }).catch(err => console.error('Contact submission error:', err));
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && typeof BroadcastChannel !== 'undefined') {
+          try {
+            const channel = new BroadcastChannel('eureco_updates');
+            channel.postMessage({ type: 'NEW_SUBMISSION', submission: res.submission });
+            channel.close();
+          } catch(e) {}
+        }
+      })
+      .catch(err => console.error('Contact submission error:', err));
 
       // Success animation
       submitBtn.textContent = 'SENT ✓';
@@ -378,6 +394,29 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.style.borderColor = '#3D6CAE';
       submitBtn.style.color = '#FFFFFF';
     });
+  }
+
+  // ============================================================
+  // LIVE UPDATES LISTENER (No Refresh Needed)
+  // ============================================================
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const eurecoChannel = new BroadcastChannel('eureco_updates');
+      eurecoChannel.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SITE_DATA_UPDATED') {
+          fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' })
+            .then(r => r.json())
+            .then(res => {
+              if (res.success && res.siteData) {
+                applyDynamicSiteData(res.siteData);
+                if (res.siteData.reelsSection) renderReelsSection(res.siteData.reelsSection);
+                if (res.siteData.team && typeof renderTeamCarousel === 'function') renderTeamCarousel(res.siteData.team);
+              }
+            })
+            .catch(err => console.error('[Eureco] Live site data sync failed:', err));
+        }
+      });
+    } catch(e) {}
   }
 
   // ============================================================
@@ -674,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (targetId === '#') return;
       const targetElement = document.querySelector(targetId);
       if (targetElement) {
-        const navHeight = navbar.offsetHeight;
+        const navHeight = navbar ? navbar.offsetHeight : 0;
         const targetPosition = targetElement.offsetTop - navHeight;
         window.scrollTo({
           top: targetPosition,
@@ -812,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function spin() {
       if (!teamIsAutoSpinning) return;
-      teamCarouselAngle += 0.15;
+      teamCarouselAngle += 0.05;
       const carousel = document.getElementById('teamCarousel');
       if (carousel) {
         carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
@@ -834,7 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (teamAnimFrame) cancelAnimationFrame(teamAnimFrame);
 
     function decay() {
-      if (Math.abs(teamVelocity) < 0.01) {
+      if (Math.abs(teamVelocity) < 0.005) {
         teamVelocity = 0;
         // Resume auto spin after momentum ends
         setTimeout(() => {
@@ -844,7 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      teamVelocity *= 0.96; // Friction
+      teamVelocity *= 0.95; // Friction
       teamCarouselAngle += teamVelocity;
       const carousel = document.getElementById('teamCarousel');
       if (carousel) {
@@ -869,8 +908,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousemove', (e) => {
       if (!teamIsDragging) return;
       const deltaX = e.clientX - teamDragStartX;
-      teamVelocity = deltaX * 0.05 - (teamCarouselAngle - teamDragAngle - deltaX * 0.3) * 0.01;
-      teamCarouselAngle = teamDragAngle + deltaX * 0.3;
+      teamVelocity = deltaX * 0.015 - (teamCarouselAngle - teamDragAngle - deltaX * 0.1) * 0.005;
+      teamCarouselAngle = teamDragAngle + deltaX * 0.1;
       carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
     });
 
@@ -893,8 +932,8 @@ document.addEventListener('DOMContentLoaded', () => {
     scene.addEventListener('touchmove', (e) => {
       if (!teamIsDragging) return;
       const deltaX = e.touches[0].clientX - teamDragStartX;
-      teamVelocity = deltaX * 0.05 - (teamCarouselAngle - teamDragAngle - deltaX * 0.3) * 0.01;
-      teamCarouselAngle = teamDragAngle + deltaX * 0.3;
+      teamVelocity = deltaX * 0.015 - (teamCarouselAngle - teamDragAngle - deltaX * 0.1) * 0.005;
+      teamCarouselAngle = teamDragAngle + deltaX * 0.1;
       carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;
     }, { passive: true });
 
@@ -910,8 +949,8 @@ document.addEventListener('DOMContentLoaded', () => {
     scene.addEventListener('wheel', (e) => {
       e.preventDefault();
       stopTeamAutoSpin();
-      teamVelocity += e.deltaY * 0.08;
-      teamCarouselAngle += e.deltaY * 0.15;
+      teamVelocity += e.deltaY * 0.015;
+      teamCarouselAngle += e.deltaY * 0.025;
       const carousel = document.getElementById('teamCarousel');
       if (carousel) {
         carousel.style.transform = `rotateY(${teamCarouselAngle}deg)`;

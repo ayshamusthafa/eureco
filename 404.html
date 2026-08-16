@@ -75,15 +75,14 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const raw = localStorage.getItem('eureco_site_data');
-      if (raw) {
-        try {
-          const data = JSON.parse(raw);
-          if (data.config404 && data.config404.customMessage) {
-            document.getElementById('errorMsg').textContent = data.config404.customMessage;
+      fetch(`/api/site-data?t=${Date.now()}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.success && res.siteData && res.siteData.config404 && res.siteData.config404.customMessage) {
+            document.getElementById('errorMsg').textContent = res.siteData.config404.customMessage;
           }
-        } catch(e) {}
-      }
+        })
+        .catch(err => console.error('Error loading 404 message from API:', err));
     });
   </script>
 </body>

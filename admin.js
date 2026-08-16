@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // IN-MEMORY LIVE DATA (single source of truth — NOT localStorage)
   // ============================================================
   let _liveData = JSON.parse(JSON.stringify(defaultSiteData));
+  let _submissions = [];
 
   // Returns current in-memory site data (never reads localStorage)
   function getSiteData() {
@@ -150,6 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }).then(r => r.json()).then(res => {
       if (res.success) {
         showToast('Saved successfully to Cloud!');
+        if (typeof BroadcastChannel !== 'undefined') {
+          try {
+            const channel = new BroadcastChannel('eureco_updates');
+            channel.postMessage({ type: 'SITE_DATA_UPDATED' });
+            channel.close();
+          } catch(e) {}
+        }
       } else {
         console.error('Baserow save failed:', res.message);
         showToast('Save failed: ' + (res.message || 'Unknown error'));
@@ -216,14 +224,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Reels Section Header
     const rTag = document.getElementById('reelsTaglineInput');
-    if (rTag) {
+    if (rTag && rTag.value.trim()) {
       siteData.reelsSection = siteData.reelsSection || {};
       siteData.reelsSection.tagline = rTag.value.trim();
-      siteData.reelsSection.titlePrefix = document.getElementById('reelsTitlePrefixInput').value.trim();
-      siteData.reelsSection.titleHighlight = document.getElementById('reelsTitleHighlightInput').value.trim();
-      siteData.reelsSection.titleSuffix = document.getElementById('reelsTitleSuffixInput').value.trim();
-      siteData.reelsSection.profileUrl = document.getElementById('reelsProfileUrlInput').value.trim();
-      siteData.reelsSection.buttonText = document.getElementById('reelsButtonTextInput').value.trim();
+      const rPre = document.getElementById('reelsTitlePrefixInput');
+      if (rPre && rPre.value.trim()) siteData.reelsSection.titlePrefix = rPre.value.trim();
+      const rHigh = document.getElementById('reelsTitleHighlightInput');
+      if (rHigh && rHigh.value.trim()) siteData.reelsSection.titleHighlight = rHigh.value.trim();
+      const rSuf = document.getElementById('reelsTitleSuffixInput');
+      if (rSuf && rSuf.value.trim()) siteData.reelsSection.titleSuffix = rSuf.value.trim();
+      const rProf = document.getElementById('reelsProfileUrlInput');
+      if (rProf && rProf.value.trim()) siteData.reelsSection.profileUrl = rProf.value.trim();
+      const rBtn = document.getElementById('reelsButtonTextInput');
+      if (rBtn && rBtn.value.trim()) siteData.reelsSection.buttonText = rBtn.value.trim();
     }
 
     // 5. Footer Content & Socials
@@ -252,17 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSubmissions() {
-    const raw = localStorage.getItem('eureco_contact_submissions');
-    if (!raw) return [];
-    try {
-      return JSON.parse(raw);
-    } catch(e) {
-      return [];
-    }
-  }
-
-  function saveSubmissions(subs) {
-    localStorage.setItem('eureco_contact_submissions', JSON.stringify(subs));
+    return _submissions;
   }
 
   // Toast Notification
@@ -422,6 +425,9 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const tabId = item.getAttribute('data-tab');
       switchTab(tabId);
+      if (tabId === 'submissions' || tabId === 'dashboard') {
+        syncSubmissionsOnly();
+      }
     });
   });
 
@@ -511,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderReelsTable(siteData.reelsSection ? siteData.reelsSection.cards : []);
   }
 
-  // Fetch live data from Baserow API, update in-memory store, then render dashboard
+  // Fetch live data from Baserow API and submissions from server API, update in-memory store, then render dashboard
   async function syncAndInitAdminDashboard() {
     try {
       const r = await fetch(`/api/site-data?t=${Date.now()}`, { cache: 'no-store' });
@@ -522,10 +528,49 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.warn('Could not sync live site-data from Baserow for admin:', e);
     }
+
+    await syncSubmissionsOnly();
     initAdminDashboard();
   }
 
+  async function syncSubmissionsOnly() {
+    try {
+      const r = await fetch(`/api/contact/submissions?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await r.json();
+      if (res.success && Array.isArray(res.submissions)) {
+        _submissions = res.submissions;
+        renderRecentSubmissions(_submissions);
+        renderAllSubmissionsTable(_submissions);
+        const subCountEl = document.getElementById('dashSubmissionsCount');
+        if (subCountEl) subCountEl.textContent = _submissions.length;
+      }
+    } catch (e) {
+      console.warn('Could not fetch contact submissions from server:', e);
+    }
+  }
+
   syncAndInitAdminDashboard();
+
+  // ============================================================
+  // INSTANT LIVE UPDATES & AUTO-POLLING (No Refresh Needed)
+  // ============================================================
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const eurecoChannel = new BroadcastChannel('eureco_updates');
+      eurecoChannel.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'NEW_SUBMISSION') {
+          syncSubmissionsOnly();
+        }
+      });
+    } catch(e) {}
+  }
+
+  // Background auto-polling every 3 seconds for submissions
+  setInterval(() => {
+    if (sessionStorage.getItem('eureco_admin_logged_in') === 'true') {
+      syncSubmissionsOnly();
+    }
+  }, 3000);
 
   // ============================================================
   // CONTAINERS VISIBILITY TOGGLES
@@ -889,19 +934,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.deleteSubmission = function(idx) {
-    const subs = getSubmissions();
-    subs.splice(idx, 1);
-    saveSubmissions(subs);
-    initAdminDashboard();
-    showToast('Submission deleted');
+  window.deleteSubmission = async function(idx) {
+    try {
+      const res = await fetch(`/api/contact/submissions/${idx}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Submission deleted');
+        await syncAndInitAdminDashboard();
+      } else {
+        showToast('Failed to delete submission: ' + (data.message || 'Error'));
+      }
+    } catch (err) {
+      console.error('Delete submission error:', err);
+      showToast('Error connecting to server to delete submission');
+    }
   };
 
-  window.clearAllSubmissions = function() {
+  window.clearAllSubmissions = async function() {
     if (!confirm('Are you sure you want to delete ALL contact submissions?')) return;
-    saveSubmissions([]);
-    initAdminDashboard();
-    showToast('All submissions cleared');
+    try {
+      const res = await fetch('/api/contact/submissions', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('All submissions cleared');
+        await syncAndInitAdminDashboard();
+      } else {
+        showToast('Failed to clear submissions: ' + (data.message || 'Error'));
+      }
+    } catch (err) {
+      console.error('Clear submissions error:', err);
+      showToast('Error connecting to server to clear submissions');
+    }
   };
 
   // ============================================================
@@ -935,15 +998,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.getElementById('passwordForm').addEventListener('submit', (e) => {
+  document.getElementById('passwordForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const newP = document.getElementById('newPassword').value.trim();
     if (!newP) return;
-    const siteData = collectAllAdminFormData();
-    siteData.auth = siteData.auth || {};
-    siteData.auth.password = newP;
-    saveSiteData(siteData);
-    document.getElementById('newPassword').value = '';
+
+    const username = sessionStorage.getItem('eureco_admin_user') || 'Admin';
+    const currentPassword = sessionStorage.getItem('eureco_admin_pwd') || 'Admin@132';
+
+    showToast('Updating password...');
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, currentPassword, newPassword: newP })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('eureco_admin_pwd', newP);
+        showToast('Password updated in Baserow!');
+        document.getElementById('newPassword').value = '';
+      } else {
+        showToast('Password update failed: ' + (data.message || 'Error'));
+      }
+    } catch (err) {
+      console.error('Password update error:', err);
+      showToast('Error connecting to server to change password');
+    }
   });
 
   // ============================================================

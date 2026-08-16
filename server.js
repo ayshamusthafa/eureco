@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -16,8 +17,30 @@ const BASEROW_API_URL = process.env.BASEROW_API_URL || 'https://api.baserow.io/a
 const BASEROW_TABLE_ID = process.env.BASEROW_TABLE_ID || '1111251';
 const BASEROW_API_KEY = process.env.BASEROW_API_KEY || 'jXXkrUUqrQK3RlESaDPs2gq0Eu0SK4Sw';
 
-// In-memory submissions cache for server persistence
-let localContactSubmissions = [];
+// ============================================================
+// CONTACT SUBMISSIONS — Persisted to submissions.json
+// ============================================================
+const SUBMISSIONS_FILE = path.join(__dirname, 'submissions.json');
+
+function loadSubmissions() {
+  try {
+    if (fs.existsSync(SUBMISSIONS_FILE)) {
+      const raw = fs.readFileSync(SUBMISSIONS_FILE, 'utf8');
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Error reading submissions.json:', e.message);
+  }
+  return [];
+}
+
+function saveSubmissionsToFile(subs) {
+  try {
+    fs.writeFileSync(SUBMISSIONS_FILE, JSON.stringify(subs, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error writing submissions.json:', e.message);
+  }
+}
 
 // Default Site Data Schema (Fallback & Initializer)
 const defaultSiteData = {
@@ -209,6 +232,25 @@ async function updateBaserowRow(rowId, payloadString) {
   return await response.json();
 }
 
+async function updateBaserowRowPassword(rowId, newPassword) {
+  const url = `${BASEROW_API_URL}${BASEROW_TABLE_ID}/${rowId}/?user_field_names=true`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Token ${BASEROW_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ Password: newPassword })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Baserow password update error (${response.status}): ${response.statusText} ${errText}`);
+  }
+
+  return await response.json();
+}
+
 async function createBaserowRow(payloadString, username = 'Admin', password = 'Admin@132') {
   const url = `${BASEROW_API_URL}${BASEROW_TABLE_ID}/?user_field_names=true`;
   const response = await fetch(url, {
@@ -332,6 +374,7 @@ app.post('/api/admin/login', async (req, res) => {
     res.json({
       success: true,
       token,
+      rowId: matchedRow.id,
       username: matchedRow.Username || username,
       password: matchedRow.Password || password,
       siteData
@@ -367,7 +410,32 @@ app.post('/api/admin/save', async (req, res) => {
   }
 });
 
-// 4. CONTACT FORM SUBMISSION ENDPOINT
+// 4. ADMIN CHANGE PASSWORD — updates the Baserow row's Password column directly
+app.post('/api/admin/change-password', async (req, res) => {
+  const { username, currentPassword, newPassword } = req.body;
+
+  if (!username || !currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'username, currentPassword, and newPassword are required' });
+  }
+
+  try {
+    const rows = await getBaserowRows();
+    const matchedRow = findMatchedRow(rows, username, currentPassword);
+
+    if (!matchedRow) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    await updateBaserowRowPassword(matchedRow.id, newPassword);
+
+    res.json({ success: true, message: 'Password updated successfully. Please log in again.' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update password: ' + err.message });
+  }
+});
+
+// 5. CONTACT FORM SUBMISSION ENDPOINT — persisted to submissions.json
 app.post('/api/contact', (req, res) => {
   const { name, email, phone, service, message } = req.body;
   if (!name || !email) {
@@ -375,6 +443,7 @@ app.post('/api/contact', (req, res) => {
   }
 
   const submission = {
+    id: Date.now(),
     date: new Date().toLocaleString(),
     name,
     email,
@@ -383,13 +452,54 @@ app.post('/api/contact', (req, res) => {
     message: message || ''
   };
 
-  localContactSubmissions.unshift(submission);
+  const subs = loadSubmissions();
+  subs.unshift(submission);
+  saveSubmissionsToFile(subs);
 
   res.json({
     success: true,
     message: 'Submission received successfully',
     submission
   });
+});
+
+// 6. GET CONTACT SUBMISSIONS — for admin panel
+app.get('/api/contact/submissions', (req, res) => {
+  try {
+    const subs = loadSubmissions();
+    res.json({ success: true, submissions: subs });
+  } catch (err) {
+    console.error('Error loading submissions:', err);
+    res.status(500).json({ success: false, message: 'Failed to load submissions' });
+  }
+});
+
+// 7. DELETE A SINGLE SUBMISSION
+app.delete('/api/contact/submissions/:idx', (req, res) => {
+  try {
+    const idx = parseInt(req.params.idx, 10);
+    const subs = loadSubmissions();
+    if (isNaN(idx) || idx < 0 || idx >= subs.length) {
+      return res.status(400).json({ success: false, message: 'Invalid submission index' });
+    }
+    subs.splice(idx, 1);
+    saveSubmissionsToFile(subs);
+    res.json({ success: true, message: 'Submission deleted' });
+  } catch (err) {
+    console.error('Error deleting submission:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete submission' });
+  }
+});
+
+// 8. DELETE ALL SUBMISSIONS
+app.delete('/api/contact/submissions', (req, res) => {
+  try {
+    saveSubmissionsToFile([]);
+    res.json({ success: true, message: 'All submissions cleared' });
+  } catch (err) {
+    console.error('Error clearing submissions:', err);
+    res.status(500).json({ success: false, message: 'Failed to clear submissions' });
+  }
 });
 
 // Serve index.html for root routes
@@ -410,4 +520,3 @@ app.listen(PORT, () => {
   console.log(`Eureco Backend Proxy & CMS Server running on http://localhost:${PORT}`);
   console.log(`Connected to Baserow Table ID: ${BASEROW_TABLE_ID}`);
 });
-
